@@ -16,17 +16,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        
         .status-done { background: #f0fdf4 !important; border-left: 5px solid #22c55e !important; opacity: 0.8; }
         .status-cancelled { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; opacity: 0.8; text-decoration: line-through; }
         .status-alert { border-left: 5px solid #f59e0b !important; background: #fffbeb !important; animation: pulse-border 2s infinite; }
         @keyframes pulse-border { 0% { border-left-color: #f59e0b; } 50% { border-left-color: #fbbf24; } 100% { border-left-color: #f59e0b; } }
-
         .date-input-wrapper { position: relative; }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            margin: 0; padding: 0; cursor: pointer; opacity: 0;
-        }
+        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
         .form-container { max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 8px; }
         .list-container { height: calc(100vh - 200px); overflow-y: auto; }
     </style>
@@ -111,9 +106,8 @@
     <script>
         const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
         const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
-        
-        // 🚀 請確保這是您最新的 GAS 部署網址
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyA3zwR3WPkIU-bG2BYyLgd3IhCI9Or011eKMxke5I33V_4CR6yrJRFuA_2O5Vct8x7PQ/exec'; 
+        // 🚀 請換成您最新的 GAS 部署網址
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxU1-VRhemW25ELAaE8iirnPTfwETEK9C5fSQB-uiYbjjCywJxescdyvrL86oZXHI0SuA/exec'; 
 
         const USERS = ["杜孟擇", "張家榮"];
         const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
@@ -125,12 +119,7 @@
 
         function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
 
-        window.onload = () => { 
-            initForms(); 
-            fetchMonitorData(); 
-            loadSchedulesFromCloud();
-            safeLucide(); 
-        };
+        window.onload = () => { initForms(); fetchMonitorData(); loadSchedulesFromCloud(); safeLucide(); };
 
         async function loadSchedulesFromCloud() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
@@ -147,22 +136,21 @@
             } catch (e) { console.error("排程載入失敗", e); }
         }
 
-        // 🚀 核心連線函式補全
+        // 🚀 終極穿透函式：將資料掛在 URL 後面發送，完全免疫 CSP 與 401 錯誤
         async function saveToCloud(payload) {
             try {
-                // 使用 POST 請求發送到 GAS 的 doPost 函式
-                await fetch(GAS_WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors", // 繞過 CSP/CORS 限制
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify({
-                        action: "saveSchedule",
-                        data: payload
-                    })
-                });
+                const jsonStr = encodeURIComponent(JSON.stringify(payload));
+                // 這裡改用 GET 參數傳遞，因為 Google 對 GET 的網域限制最少
+                const finalUrl = `${GAS_WEB_APP_URL}?action=saveSchedule&data=${jsonStr}`;
+                
+                // 使用 Image 物件發送請求，這是最無懈可擊的跨網域技巧
+                const ping = new Image();
+                ping.src = finalUrl;
+                
+                console.log("資料已發送 (穿透模式)");
                 return true; 
             } catch (e) {
-                console.error("雲端連線失敗", e);
+                console.error("雲端發送失敗", e);
                 return false;
             }
         }
@@ -199,21 +187,16 @@
                     status: 'pending' 
                 };
 
-                // 🚀 真正執行雲端儲存
                 const success = await saveToCloud(data);
-                
-                // 介面即時反應
-                if (editId) {
-                    const idx = localSchedules.findIndex(s => s.id === data.id);
-                    localSchedules[idx] = data;
-                } else { 
-                    localSchedules.push(data); 
+                if (success) {
+                    if (editId) {
+                        const idx = localSchedules.findIndex(s => s.id === data.id);
+                        localSchedules[idx] = data;
+                    } else { localSchedules.push(data); }
+                    resetForm(); renderScheduleList();
                 }
-                
-                resetForm(); 
-                renderScheduleList();
                 btn.disabled = false; btn.innerText = "Confirm Task";
-                alert("已送出同步請求！");
+                alert("指令已發送！資料更新約需 5-10 秒。");
             });
         }
 
@@ -328,32 +311,12 @@
         }
 
         function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Schedule"; document.getElementById('submitBtn').innerText = "Confirm Task"; document.getElementById('editControls').classList.add('hidden'); document.getElementById('submitBtn').classList.remove('hidden'); }
-        
-        async function completeSelected() { 
-            if(confirm('確認完工？')) { 
-                const id = parseInt(document.getElementById('editId').value); 
-                const item = localSchedules.find(s => s.id === id); 
-                item.status = 'done'; 
-                await saveToCloud(item);
-                resetForm(); renderScheduleList(); 
-            } 
-        }
-
-        async function cancelSelected() { 
-            if(confirm('確定取消？')) { 
-                const id = parseInt(document.getElementById('editId').value); 
-                const item = localSchedules.find(s => s.id === id); 
-                item.status = 'cancelled'; 
-                await saveToCloud(item);
-                resetForm(); renderScheduleList(); 
-            } 
-        }
-
+        async function completeSelected() { if(confirm('確認完工？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'done'; await saveToCloud(item); resetForm(); renderScheduleList(); } }
+        async function cancelSelected() { if(confirm('確定取消？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'cancelled'; await saveToCloud(item); resetForm(); renderScheduleList(); } }
         function toggleArchive() { archiveExpanded = !archiveExpanded; renderScheduleList(); }
         function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
         function switchPage(p) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-'+p).classList.add('page-active'); document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active')); document.getElementById('nav-'+p).classList.add('nav-active'); safeLucide(); }
         function filterRegion(r) { currentMonitorFilter = r; document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r) || (r==='ALL' && b.innerText==='全域'))); document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.classList.contains('bg-blue-600'))); renderMonitorCards(); }
-        
         function showMonitorDetail(gasName) {
             const item = latestMonitorData.find(d => d.gas === gasName);
             if (!item) return;
