@@ -107,7 +107,7 @@
         const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
         const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
         // 🚀 請換成您最新的 GAS 部署網址
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxU1-VRhemW25ELAaE8iirnPTfwETEK9C5fSQB-uiYbjjCywJxescdyvrL86oZXHI0SuA/exec'; 
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxsJeu8WjYlp_FClCqBrxaRXLehdYhh8ZpptVrPWg2HwwExeyzJs7zVlN7RW_QIzJNtNw/exec'; 
 
         const USERS = ["杜孟擇", "張家榮"];
         const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
@@ -136,24 +136,29 @@
             } catch (e) { console.error("排程載入失敗", e); }
         }
 
-        // 🚀 終極穿透函式：將資料掛在 URL 後面發送，完全免疫 CSP 與 401 錯誤
         async function saveToCloud(payload) {
-            try {
-                const jsonStr = encodeURIComponent(JSON.stringify(payload));
-                // 這裡改用 GET 參數傳遞，因為 Google 對 GET 的網域限制最少
-                const finalUrl = `${GAS_WEB_APP_URL}?action=saveSchedule&data=${jsonStr}`;
-                
-                // 使用 Image 物件發送請求，這是最無懈可擊的跨網域技巧
-                const ping = new Image();
-                ping.src = finalUrl;
-                
-                console.log("資料已發送 (穿透模式)");
-                return true; 
-            } catch (e) {
-                console.error("雲端發送失敗", e);
-                return false;
-            }
-        }
+    try {
+        // 使用 fetch 發送 POST 給 GAS 的 doPost
+        fetch(GAS_WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors", // 🚀 關鍵：這是為了不讓瀏覽器報 CORS 錯誤
+            cache: "no-cache",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+                action: "saveSchedule",
+                data: payload
+            })
+        });
+        
+        // 因為是 no-cors，我們無法讀取回傳值，但資料會送達
+        console.log("資料發送完成");
+        return true; 
+    } catch (e) {
+        console.error("發送失敗", e);
+        return false;
+    }
+}
+       
 
         function initForms() {
             const uSel = document.getElementById('userName'); 
