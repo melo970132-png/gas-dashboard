@@ -109,15 +109,14 @@
     </div>
 
     <script>
-        // 🎯 核心設定區
         const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
         const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
         
-        // 🚀 關鍵：請換成您的 GAS 網頁應用程式網址 (部署後的網址)
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxIIkjYrpQEQ9INNmdU2YsXvmwh4qTHuRZB3nDsLdXONd10eVhXmXpdYi12BjkMeWlXvQ/exec'; 
+        // 🚀 請確保這是您最新的 GAS 部署網址
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxwBlZIGzsnTI9zi_yoPkNXO99w7-K5FfipkTTgoe4iB05kq4LY5tVGnXKQ6FyW7axOGg/exec'; 
 
-        const USERS = ["杜孟擇", "張家榮", "蔣永興", "劉肇富", "鄭鈞儒", "侯可旋"];
-        const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮民總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
+        const USERS = ["杜孟擇", "張家榮"];
+        const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
         
         let latestMonitorData = []; 
         let localSchedules = []; 
@@ -129,11 +128,10 @@
         window.onload = () => { 
             initForms(); 
             fetchMonitorData(); 
-            loadSchedulesFromCloud(); // 啟動時從雲端載入排程
+            loadSchedulesFromCloud();
             safeLucide(); 
         };
 
-        // 🚀 從雲端載入排程資料
         async function loadSchedulesFromCloud() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
             try {
@@ -149,17 +147,22 @@
             } catch (e) { console.error("排程載入失敗", e); }
         }
 
-        // 🚀 儲存排程到雲端 (穿透 GAS)
+        // 🚀 核心連線函式補全
         async function saveToCloud(payload) {
             try {
-                await fetch(GAS_WEB_APP_URL + "?action=saveSchedule", {
+                // 使用 POST 請求發送到 GAS 的 doPost 函式
+                await fetch(GAS_WEB_APP_URL, {
                     method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify(payload)
+                    mode: "no-cors", // 繞過 CSP/CORS 限制
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({
+                        action: "saveSchedule",
+                        data: payload
+                    })
                 });
-                return true;
+                return true; 
             } catch (e) {
-                console.error("雲端儲存失敗", e);
+                console.error("雲端連線失敗", e);
                 return false;
             }
         }
@@ -196,15 +199,21 @@
                     status: 'pending' 
                 };
 
+                // 🚀 真正執行雲端儲存
                 const success = await saveToCloud(data);
-                if (success) {
-                    if (editId) {
-                        const idx = localSchedules.findIndex(s => s.id === data.id);
-                        localSchedules[idx] = data;
-                    } else { localSchedules.push(data); }
-                    resetForm(); renderScheduleList();
-                } else { alert("同步失敗，請檢查網路！"); }
+                
+                // 介面即時反應
+                if (editId) {
+                    const idx = localSchedules.findIndex(s => s.id === data.id);
+                    localSchedules[idx] = data;
+                } else { 
+                    localSchedules.push(data); 
+                }
+                
+                resetForm(); 
+                renderScheduleList();
                 btn.disabled = false; btn.innerText = "Confirm Task";
+                alert("已送出同步請求！");
             });
         }
 
