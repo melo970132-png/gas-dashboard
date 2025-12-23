@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAS 戰情監控中心 v4.7.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-light: #f1f5f9; }
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; overflow: hidden; }
+        .nav-active { background: #2563eb !important; color: white !important; }
+        .page-content { display: none; animation: fadeIn 0.4s ease-out forwards; height: 100%; }
+        .page-active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        
+        .status-done { background: #f0fdf4 !important; border-left: 5px solid #22c55e !important; opacity: 0.8; }
+        .status-cancelled { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; opacity: 0.8; text-decoration: line-through; }
+        .status-alert { border-left: 5px solid #f59e0b !important; background: #fffbeb !important; animation: pulse-border 2s infinite; }
+        @keyframes pulse-border { 0% { border-left-color: #f59e0b; } 50% { border-left-color: #fbbf24; } 100% { border-left-color: #f59e0b; } }
+
+        .date-input-wrapper { position: relative; }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            margin: 0; padding: 0; cursor: pointer; opacity: 0;
+        }
+        .form-container { max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 8px; }
+        .list-container { height: calc(100vh - 200px); overflow-y: auto; }
+    </style>
+</head>
+<body class="flex flex-col lg:flex-row h-screen overflow-hidden text-lg">
+
+    <aside class="lg:w-72 w-full lg:h-screen bg-white border-r border-slate-200 p-6 flex flex-col z-50">
+        <div class="mb-10 text-center lg:text-left">
+            <h1 class="text-3xl font-black italic tracking-tighter text-slate-900 uppercase leading-none">Gas Command</h1>
+            <p class="text-[10px] text-blue-600 font-bold tracking-widest uppercase mt-2">v4.7.2 Elite</p>
+        </div>
+        <nav class="space-y-4 flex-1">
+            <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-active w-full flex items-center gap-4 px-5 py-4 rounded-xl text-base font-bold transition-all"><i data-lucide="layout-dashboard"></i> 即時存量監控</button>
+            <button onclick="switchPage('schedule')" id="nav-schedule" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl text-base font-bold text-slate-500 hover:bg-slate-100 transition-all"><i data-lucide="calendar-range"></i> 北區備刀排程</button>
+        </nav>
+    </aside>
+
+    <main class="flex-1 overflow-hidden p-6 lg:p-12">
+        <section id="page-monitor" class="page-content page-active">
+            <header class="flex justify-between items-end mb-10">
+                <div><h2 class="text-6xl font-black italic text-slate-900 uppercase tracking-tighter">Live Status</h2><p class="text-blue-600 text-sm font-bold tracking-widest mt-3 uppercase">全台鋼瓶最新存量</p></div>
+                <div class="flex gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+                    <button onclick="filterRegion('ALL')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white">全域</button>
+                    <button onclick="filterRegion('北區')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-500">北區</button>
+                    <button onclick="filterRegion('中區')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-500">中區</button>
+                    <button onclick="filterRegion('南區')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-500">南區</button>
+                </div>
+            </header>
+            <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar pb-20"></div>
+        </section>
+
+        <section id="page-schedule" class="page-content">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div class="lg:col-span-4">
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                        <h3 id="formTitle" class="text-3xl font-black mb-6 text-blue-600 italic">Add Schedule</h3>
+                        <div class="form-container custom-scrollbar">
+                            <form id="surgeryForm" class="space-y-4 pr-1">
+                                <input type="hidden" id="editId">
+                                <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-widest">負責人</label><select id="userName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base outline-none"></select></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="date-input-wrapper"><label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-widest">日期</label><input type="date" id="surgeryDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base outline-none"></div>
+                                    <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-widest">星期</label><div id="weekdayDisplay" class="py-3 px-4 text-blue-600 font-black text-base bg-blue-50 rounded-xl text-center">--</div></div>
+                                </div>
+                                <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-widest">醫院名稱</label><select id="hospitalName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base outline-none"></select></div>
+                                <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-widest">台數</label><select id="casesCount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base outline-none"><option value="1">1 台</option><option value="2">2 台</option><option value="3">3 台</option></select></div>
+                                <div class="p-6 bg-blue-50 rounded-3xl border border-blue-100 space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="space-y-1"><span class="text-xs text-blue-500 font-black uppercase">He 氦氣</span><select id="heGas" class="gas-sel w-full bg-white border border-blue-200 rounded-lg px-2 py-2 text-sm font-mono"></select></div>
+                                        <div class="space-y-1"><span class="text-xs text-blue-500 font-black uppercase">Ar1 氬氣</span><select id="ar1Gas" class="gas-sel w-full bg-white border border-blue-200 rounded-lg px-2 py-2 text-sm font-mono"></select></div>
+                                    </div>
+                                    <div class="space-y-1"><span class="text-xs text-slate-400 font-bold uppercase">Ar2 (選填)</span><select id="ar2Gas" class="gas-sel w-full bg-white border border-slate-200 rounded-lg px-2 py-2 text-sm font-mono"><option value="">無</option></select></div>
+                                </div>
+                                <div class="space-y-3 pt-4">
+                                    <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 rounded-2xl font-black text-white text-sm tracking-[0.2em] hover:bg-blue-700 shadow-md uppercase italic">Confirm Task</button>
+                                    <div id="editControls" class="hidden flex flex-col gap-3">
+                                        <div class="flex gap-2">
+                                            <button type="button" onclick="completeSelected()" class="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black text-xs uppercase">Mark Done</button>
+                                            <button type="button" onclick="cancelSelected()" class="flex-1 py-4 bg-red-100 text-red-600 border border-red-200 rounded-2xl font-black text-xs uppercase">Cancel Task</button>
+                                        </div>
+                                        <button type="button" onclick="resetForm()" class="w-full py-2 text-slate-400 text-xs font-bold uppercase italic hover:underline">Cancel Edit</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-8">
+                    <div id="scheduleGrid" class="list-container custom-scrollbar space-y-4 pb-20"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="monitor-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+        <div class="bg-white w-full max-w-xl rounded-[2.5rem] p-12 relative border border-slate-200 shadow-2xl">
+            <button onclick="closeMonitorModal()" class="absolute top-8 right-8 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-8 h-8"></i></button>
+            <div id="monitor-modal-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
+        const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
+        const RANGE = '紀錄!A2:L2000';
+        const USERS = ["杜孟擇", "張家榮"];
+        const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮民總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
+        
+        let latestMonitorData = []; let localSchedules = []; let currentMonitorFilter = 'ALL';
+        let archiveExpanded = false;
+
+        function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
+        window.onload = () => { initForms(); fetchMonitorData(); renderScheduleList(); safeLucide(); };
+
+        function initForms() {
+            const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName');
+            const gSels = document.querySelectorAll('.gas-sel');
+            USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
+            for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
+            document.getElementById('surgeryDate').addEventListener('input', (e) => {
+                const days = ['週日','週一','週二','週三','週四','週五','週六'];
+                document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--';
+            });
+            document.getElementById('surgeryForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const editId = document.getElementById('editId').value;
+                const data = {
+                    id: editId ? parseInt(editId) : Date.now(),
+                    user: document.getElementById('userName').value, date: document.getElementById('surgeryDate').value,
+                    weekday: document.getElementById('weekdayDisplay').innerText, hospital: document.getElementById('hospitalName').value,
+                    cases: document.getElementById('casesCount').value, he: document.getElementById('heGas').value,
+                    ar1: document.getElementById('ar1Gas').value, ar2: document.getElementById('ar2Gas').value || '無', status: 'pending' 
+                };
+                if (editId) {
+                    const idx = localSchedules.findIndex(s => s.id === data.id);
+                    data.status = localSchedules[idx].status; localSchedules[idx] = data;
+                } else { localSchedules.push(data); }
+                resetForm(); renderScheduleList();
+            });
+        }
+
+        async function fetchMonitorData() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            try {
+                const res = await fetch(url); const data = await res.json();
+                if (data.values) {
+                    const map = new Map();
+                    data.values.forEach(row => {
+                        if (row[2]) map.set(row[2], {
+                            gas: row[2], region: row[3], location: row[5], pressure: parseInt(row[7]) || 0, user: row[1], time: row[0], reason: row[6], ar2: row[8] ? parseInt(row[8]) : null
+                        });
+                    });
+                    latestMonitorData = Array.from(map.values()).sort((a,b) => {
+                        const getVal = s => { const m = s.match(/([a-zA-Z]+)(\d+)/); return m ? [m[1], parseInt(m[2])] : [s, 0]; };
+                        const [pA, nA] = getVal(a.gas); const [pB, nB] = getVal(b.gas);
+                        return pA !== pB ? pA.localeCompare(pB) : nA - nB;
+                    });
+                    renderMonitorCards();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderMonitorCards() {
+            const grid = document.getElementById('monitor-grid');
+            const filtered = currentMonitorFilter === 'ALL' ? latestMonitorData : latestMonitorData.filter(d => d.region === currentMonitorFilter);
+            grid.innerHTML = filtered.map(item => {
+                const isCrit = item.pressure < 3000; const pct = Math.min((item.pressure / 6000) * 100, 100);
+                return `
+                <div onclick="showMonitorDetail('${item.gas}')" class="bg-white p-8 rounded-[2.5rem] border border-slate-100 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-300 transition-all relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="space-y-1">
+                            <span class="text-sm font-black text-blue-500 uppercase tracking-widest leading-none">${item.region} | ${item.location}</span>
+                            <h3 class="text-5xl font-black text-slate-800 italic leading-none">${item.gas}</h3>
+                        </div>
+                        <i data-lucide="activity" class="${isCrit ? 'text-red-500 animate-pulse' : 'text-blue-500'} w-8 h-8"></i>
+                    </div>
+                    <div class="text-6xl font-mono font-black text-slate-900 mb-4">${item.pressure.toLocaleString()} <span class="text-lg text-slate-400 italic font-sans">PSI</span></div>
+                    <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-6"><div class="h-full ${isCrit ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${pct}%"></div></div>
+                    <div class="flex justify-between items-center text-xs font-bold pt-4 border-t border-slate-100 uppercase">
+                        <span class="text-slate-400 font-mono">Synced by ${item.user}</span>
+                        <span class="text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">${item.reason || '無備註'}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            safeLucide();
+        }
+
+        function renderScheduleList() {
+            const grid = document.getElementById('scheduleGrid');
+            const now = new Date(); now.setHours(0,0,0,0);
+            const sorted = [...localSchedules].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const alerts = sorted.filter(s => new Date(s.date) < now && s.status === 'pending');
+            const active = sorted.filter(s => new Date(s.date) >= now && s.status === 'pending');
+            const archive = sorted.filter(s => (s.status === 'done' || s.status === 'cancelled') && (new Date() - new Date(s.date)) / (1000*60*60*24) <= 7);
+
+            let html = '';
+            if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-sm font-black text-amber-600 uppercase mb-3">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'status-alert')).join('') + `</div>`;
+            html += `<div class="mb-4"><h4 class="text-sm font-black text-slate-400 uppercase mb-3">📅 預定備刀</h4>` + 
+                    (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<div class="text-base text-slate-300 italic py-10 text-center">目前無進行中任務</div>`) + `</div>`;
+            
+            // 🚀 重新加入 7 天收折歷史 🚀
+            if(archive.length > 0) {
+                html += `<div class="mt-12 border-t border-slate-200 pt-6">
+                    <button onclick="toggleArchive()" class="w-full py-4 bg-slate-100 rounded-2xl text-sm font-black text-slate-500 uppercase flex justify-between px-6 hover:bg-slate-200 transition-colors shadow-sm">
+                        <span>顯示 7 天內歷史紀錄 (${archive.length})</span>
+                        <i data-lucide="${archiveExpanded ? 'chevron-up' : 'chevron-down'}"></i>
+                    </button>
+                    <div id="archiveContent" class="${archiveExpanded ? 'block' : 'hidden'} space-y-4 mt-6">` + archive.map(i => getItemHtml(i, i.status === 'done' ? 'status-done' : 'status-cancelled')).join('') + `</div></div>`;
+            }
+            grid.innerHTML = html;
+            safeLucide();
+        }
+
+        function getItemHtml(item, customClass = '') {
+            let badge = '';
+            if(item.status === 'done') badge = `<span class="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-xs font-black italic">DONE</span>`;
+            if(item.status === 'cancelled') badge = `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-xs font-black italic">CANCELLED</span>`;
+            return `
+            <div onclick="editSchedule(${item.id})" class="item-row bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 cursor-pointer shadow-sm ${customClass} transition-all hover:border-blue-300">
+                <div class="flex flex-col items-center justify-center min-w-[100px] border-r border-slate-100 pr-6">
+                    <span class="text-blue-500 font-black text-xs uppercase italic leading-none mb-2">${item.weekday}</span>
+                    <span class="text-slate-900 font-mono font-black text-2xl tracking-tighter leading-none">${item.date.slice(5)}</span>
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex items-center gap-3 justify-center md:justify-start mb-2"><h4 class="text-2xl font-black text-slate-800 uppercase italic leading-none">${item.hospital}</h4>${badge}</div>
+                    <div class="text-xs font-bold text-slate-400 uppercase font-mono tracking-wide">User: ${item.user} | Cases: ${item.cases}</div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-blue-50 border border-blue-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-500 uppercase italic mb-1">HE</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.he.replace(' PSI','')}</p></div>
+                    <div class="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-slate-500 uppercase italic mb-1">AR1</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.ar1.replace(' PSI','')}</p></div>
+                </div>
+            </div>`;
+        }
+
+        function editSchedule(id) {
+            const item = localSchedules.find(s => s.id === id);
+            document.getElementById('editId').value = item.id;
+            document.getElementById('userName').value = item.user;
+            document.getElementById('surgeryDate').value = item.date;
+            document.getElementById('hospitalName').value = item.hospital;
+            document.getElementById('casesCount').value = item.cases.includes('台') ? item.cases : item.cases + ' 台';
+            document.getElementById('heGas').value = item.he;
+            document.getElementById('ar1Gas').value = item.ar1;
+            document.getElementById('ar2Gas').value = item.ar2 === '無' ? '' : item.ar2;
+            document.getElementById('weekdayDisplay').innerText = item.weekday;
+            document.getElementById('formTitle').innerHTML = `Modify Task <span class="text-xs bg-blue-100 px-2 py-1 rounded-md ml-2 font-bold uppercase tracking-widest text-blue-600">Edit Mode</span>`;
+            document.getElementById('submitBtn').innerText = "Update Task Info";
+            document.getElementById('editControls').classList.remove('hidden');
+            document.getElementById('submitBtn').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Schedule"; document.getElementById('submitBtn').innerText = "Confirm Task"; document.getElementById('editControls').classList.add('hidden'); document.getElementById('submitBtn').classList.remove('hidden'); }
+        function completeSelected() { if(confirm('確認完工？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'done'; resetForm(); renderScheduleList(); } }
+        function cancelSelected() { if(confirm('確定取消？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'cancelled'; resetForm(); renderScheduleList(); } }
+        function toggleArchive() { archiveExpanded = !archiveExpanded; renderScheduleList(); }
+        function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
+        function switchPage(p) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-'+p).classList.add('page-active'); document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active')); document.getElementById('nav-'+p).classList.add('nav-active'); safeLucide(); }
+        function filterRegion(r) { currentMonitorFilter = r; document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r) || (r==='ALL' && b.innerText==='全域'))); document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.classList.contains('bg-blue-600'))); renderMonitorCards(); }
+        
+        function showMonitorDetail(gasName) {
+            const item = latestMonitorData.find(d => d.gas === gasName);
+            if (!item) return;
+            document.getElementById('monitor-modal-content').innerHTML = `
+                <div class="flex items-center gap-6 mb-10"><div class="p-6 bg-blue-50 rounded-3xl text-blue-600 border border-blue-100 shadow-sm"><i data-lucide="database" class="w-12 h-12"></i></div><div><h2 class="text-5xl font-black text-slate-800 italic uppercase leading-none">${item.gas}</h2><p class="text-blue-600 font-bold text-base uppercase tracking-widest mt-3">${item.region} | ${item.location}</p></div></div>
+                <div class="grid grid-cols-2 gap-y-12 gap-x-10 leading-none">
+                    <div class="space-y-3"><p class="text-sm font-black text-slate-400 uppercase tracking-widest italic mb-2 leading-none">主壓力 / Primary</p><p class="text-6xl font-black text-slate-900 font-mono leading-none">${item.pressure.toLocaleString()} <span class="text-xl font-sans italic text-slate-300">PSI</span></p></div>
+                    ${item.ar2 ? `<div class="space-y-3"><p class="text-sm font-black text-slate-400 uppercase tracking-widest italic mb-2 leading-none">選填 / Ar2</p><p class="text-6xl font-black text-slate-900 font-mono leading-none">${item.ar2.toLocaleString()} <span class="text-xl font-sans italic text-slate-300">PSI</span></p></div>` : ''}
+                    <div class="col-span-2 border-t border-slate-100 pt-10 font-black uppercase text-4xl text-blue-600 italic tracking-tighter leading-tight">${item.reason || '無備註'}</div>
+                    <div class="text-sm font-bold text-slate-400 uppercase font-mono">Sync User: ${item.user}</div><div class="text-sm font-bold text-slate-400 text-right uppercase font-mono">Sync Time: ${item.time}</div>
+                </div>
+                <button onclick="closeMonitorModal()" class="w-full mt-14 py-6 bg-slate-800 text-white rounded-[2rem] font-black text-lg tracking-[0.4em] hover:bg-slate-900 transition-all uppercase italic shadow-lg">Close Dialog</button>
+            `;
+            document.getElementById('monitor-modal').classList.remove('hidden'); safeLucide();
+        }
+    </script>
+</body>
+</html>
