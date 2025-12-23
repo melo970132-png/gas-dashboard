@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { --bg-light: #f1f5f9; }
-        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; overflow: hidden; }
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; overflow-x: hidden; }
         .nav-active { background: #2563eb !important; color: white !important; }
         .page-content { display: none; animation: fadeIn 0.4s ease-out forwards; height: 100%; }
         .page-active { display: block; }
@@ -36,7 +36,7 @@
     <aside class="lg:w-72 w-full lg:h-screen bg-white border-r border-slate-200 p-6 flex flex-col z-50">
         <div class="mb-10 text-center lg:text-left">
             <h1 class="text-3xl font-black italic tracking-tighter text-slate-900 uppercase leading-none">Gas Command</h1>
-            <p class="text-[10px] text-blue-600 font-bold tracking-widest uppercase mt-2">v4.7.2 Elite</p>
+            <p class="text-[10px] text-blue-600 font-bold tracking-widest uppercase mt-2">v4.7.2 Elite Sync</p>
         </div>
         <nav class="space-y-4 flex-1">
             <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-active w-full flex items-center gap-4 px-5 py-4 rounded-xl text-base font-bold transition-all"><i data-lucide="layout-dashboard"></i> 即時存量監控</button>
@@ -81,7 +81,7 @@
                                     <div class="space-y-1"><span class="text-xs text-slate-400 font-bold uppercase">Ar2 (選填)</span><select id="ar2Gas" class="gas-sel w-full bg-white border border-slate-200 rounded-lg px-2 py-2 text-sm font-mono"><option value="">無</option></select></div>
                                 </div>
                                 <div class="space-y-3 pt-4">
-                                    <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 rounded-2xl font-black text-white text-sm tracking-[0.2em] hover:bg-blue-700 shadow-md uppercase italic">Confirm Task</button>
+                                    <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 rounded-2xl font-black text-white text-sm tracking-[0.2em] hover:bg-blue-700 shadow-md uppercase italic transition-all">Confirm Task</button>
                                     <div id="editControls" class="hidden flex flex-col gap-3">
                                         <div class="flex gap-2">
                                             <button type="button" onclick="completeSelected()" class="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black text-xs uppercase">Mark Done</button>
@@ -109,47 +109,107 @@
     </div>
 
     <script>
-        const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
+        // 🎯 核心設定區
         const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
-        const RANGE = '紀錄!A2:L2000';
-        const USERS = ["杜孟擇", "張家榮"];
+        const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
+        
+        // 🚀 關鍵：請換成您的 GAS 網頁應用程式網址 (部署後的網址)
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxcPzD70Hj5SqBxl-uhkLc4glXSK19ijnLWhdDtapQbfkdMqdb4uylgBOjX_JaHrX4XGQ/exec'; 
+
+        const USERS = ["杜孟擇", "張家榮", "蔣永興", "劉肇富", "鄭鈞儒", "侯可旋"];
         const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮民總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
         
-        let latestMonitorData = []; let localSchedules = []; let currentMonitorFilter = 'ALL';
+        let latestMonitorData = []; 
+        let localSchedules = []; 
+        let currentMonitorFilter = 'ALL';
         let archiveExpanded = false;
 
         function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
-        window.onload = () => { initForms(); fetchMonitorData(); renderScheduleList(); safeLucide(); };
+
+        window.onload = () => { 
+            initForms(); 
+            fetchMonitorData(); 
+            loadSchedulesFromCloud(); // 啟動時從雲端載入排程
+            safeLucide(); 
+        };
+
+        // 🚀 從雲端載入排程資料
+        async function loadSchedulesFromCloud() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.values) {
+                    localSchedules = data.values.map(r => ({
+                        id: parseInt(r[0]), date: r[1], weekday: r[2], hospital: r[3],
+                        user: r[4], cases: r[5], he: r[6], ar1: r[7], ar2: r[8], status: r[9]
+                    }));
+                    renderScheduleList();
+                }
+            } catch (e) { console.error("排程載入失敗", e); }
+        }
+
+        // 🚀 儲存排程到雲端 (穿透 GAS)
+        async function saveToCloud(payload) {
+            try {
+                await fetch(GAS_WEB_APP_URL + "?action=saveSchedule", {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify(payload)
+                });
+                return true;
+            } catch (e) {
+                console.error("雲端儲存失敗", e);
+                return false;
+            }
+        }
 
         function initForms() {
-            const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName');
+            const uSel = document.getElementById('userName'); 
+            const hSel = document.getElementById('hospitalName');
             const gSels = document.querySelectorAll('.gas-sel');
-            USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
+            USERS.forEach(u => uSel.add(new Option(u, u))); 
+            HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
             for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
+            
             document.getElementById('surgeryDate').addEventListener('input', (e) => {
                 const days = ['週日','週一','週二','週三','週四','週五','週六'];
                 document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--';
             });
-            document.getElementById('surgeryForm').addEventListener('submit', function(e) {
+
+            document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true; btn.innerText = "SYNCING...";
+                
                 const editId = document.getElementById('editId').value;
                 const data = {
                     id: editId ? parseInt(editId) : Date.now(),
-                    user: document.getElementById('userName').value, date: document.getElementById('surgeryDate').value,
-                    weekday: document.getElementById('weekdayDisplay').innerText, hospital: document.getElementById('hospitalName').value,
-                    cases: document.getElementById('casesCount').value, he: document.getElementById('heGas').value,
-                    ar1: document.getElementById('ar1Gas').value, ar2: document.getElementById('ar2Gas').value || '無', status: 'pending' 
+                    user: document.getElementById('userName').value, 
+                    date: document.getElementById('surgeryDate').value,
+                    weekday: document.getElementById('weekdayDisplay').innerText, 
+                    hospital: document.getElementById('hospitalName').value,
+                    cases: document.getElementById('casesCount').value, 
+                    he: document.getElementById('heGas').value,
+                    ar1: document.getElementById('ar1Gas').value, 
+                    ar2: document.getElementById('ar2Gas').value || '無', 
+                    status: 'pending' 
                 };
-                if (editId) {
-                    const idx = localSchedules.findIndex(s => s.id === data.id);
-                    data.status = localSchedules[idx].status; localSchedules[idx] = data;
-                } else { localSchedules.push(data); }
-                resetForm(); renderScheduleList();
+
+                const success = await saveToCloud(data);
+                if (success) {
+                    if (editId) {
+                        const idx = localSchedules.findIndex(s => s.id === data.id);
+                        localSchedules[idx] = data;
+                    } else { localSchedules.push(data); }
+                    resetForm(); renderScheduleList();
+                } else { alert("同步失敗，請檢查網路！"); }
+                btn.disabled = false; btn.innerText = "Confirm Task";
             });
         }
 
         async function fetchMonitorData() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:L2000?key=${API_KEY}`;
             try {
                 const res = await fetch(url); const data = await res.json();
                 if (data.values) {
@@ -205,9 +265,8 @@
             let html = '';
             if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-sm font-black text-amber-600 uppercase mb-3">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'status-alert')).join('') + `</div>`;
             html += `<div class="mb-4"><h4 class="text-sm font-black text-slate-400 uppercase mb-3">📅 預定備刀</h4>` + 
-                    (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<div class="text-base text-slate-300 italic py-10 text-center">目前無進行中任務</div>`) + `</div>`;
+                    (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<div class="text-base text-slate-300 italic py-10 text-center">目前無任務</div>`) + `</div>`;
             
-            // 🚀 重新加入 7 天收折歷史 🚀
             if(archive.length > 0) {
                 html += `<div class="mt-12 border-t border-slate-200 pt-6">
                     <button onclick="toggleArchive()" class="w-full py-4 bg-slate-100 rounded-2xl text-sm font-black text-slate-500 uppercase flex justify-between px-6 hover:bg-slate-200 transition-colors shadow-sm">
@@ -235,8 +294,8 @@
                     <div class="text-xs font-bold text-slate-400 uppercase font-mono tracking-wide">User: ${item.user} | Cases: ${item.cases}</div>
                 </div>
                 <div class="flex gap-3">
-                    <div class="bg-blue-50 border border-blue-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-500 uppercase italic mb-1">HE</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.he.replace(' PSI','')}</p></div>
-                    <div class="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-slate-500 uppercase italic mb-1">AR1</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.ar1.replace(' PSI','')}</p></div>
+                    <div class="bg-blue-50 border border-blue-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-500 uppercase italic mb-1">HE</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.he}</p></div>
+                    <div class="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-slate-500 uppercase italic mb-1">AR1</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.ar1}</p></div>
                 </div>
             </div>`;
         }
@@ -260,8 +319,27 @@
         }
 
         function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Schedule"; document.getElementById('submitBtn').innerText = "Confirm Task"; document.getElementById('editControls').classList.add('hidden'); document.getElementById('submitBtn').classList.remove('hidden'); }
-        function completeSelected() { if(confirm('確認完工？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'done'; resetForm(); renderScheduleList(); } }
-        function cancelSelected() { if(confirm('確定取消？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'cancelled'; resetForm(); renderScheduleList(); } }
+        
+        async function completeSelected() { 
+            if(confirm('確認完工？')) { 
+                const id = parseInt(document.getElementById('editId').value); 
+                const item = localSchedules.find(s => s.id === id); 
+                item.status = 'done'; 
+                await saveToCloud(item);
+                resetForm(); renderScheduleList(); 
+            } 
+        }
+
+        async function cancelSelected() { 
+            if(confirm('確定取消？')) { 
+                const id = parseInt(document.getElementById('editId').value); 
+                const item = localSchedules.find(s => s.id === id); 
+                item.status = 'cancelled'; 
+                await saveToCloud(item);
+                resetForm(); renderScheduleList(); 
+            } 
+        }
+
         function toggleArchive() { archiveExpanded = !archiveExpanded; renderScheduleList(); }
         function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
         function switchPage(p) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-'+p).classList.add('page-active'); document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active')); document.getElementById('nav-'+p).classList.add('nav-active'); safeLucide(); }
