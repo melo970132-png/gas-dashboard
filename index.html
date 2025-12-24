@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAS 戰情監控中心 v5.2.0</title>
+    <title>GAS 戰情監控中心 v5.3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -11,80 +11,144 @@
         :root { --bg-light: #f8fafc; }
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; }
         
-        /* ✨ 玻璃美學與科技感優化 */
+        /* ✨ 玻璃美學強化 */
         .glass-card-ar { 
-            background: rgba(224, 242, 254, 0.7); 
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(186, 230, 253, 0.8);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: rgba(224, 242, 254, 0.85); 
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(186, 230, 253, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         }
         .glass-card-he { 
-            background: rgba(245, 243, 255, 0.7); 
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(221, 214, 254, 0.8);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: rgba(245, 243, 255, 0.85); 
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(221, 214, 254, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         }
         
-        /* 手機版優化基礎 */
-        @media (max-width: 640px) {
-            .text-adaptive-title { font-size: 2.5rem !important; }
-            .card-grid { gap: 1rem !important; }
-            .monitor-card { height: auto !important; min-height: 280px; }
+        /* 📱 手機版專屬優化：橫向導覽 */
+        @media (max-width: 1023px) {
+            .mobile-nav-scroll {
+                display: flex;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 8px;
+                gap: 8px;
+            }
+            .mobile-nav-scroll::-webkit-scrollbar { display: none; }
+            .mobile-nav-btn { flex: 0 0 auto; }
+            .main-content { padding: 16px !important; }
+            .header-title { font-size: 3rem !important; }
         }
 
-        .nav-active { background: #2563eb !important; color: white !important; }
+        .nav-active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         .page-content { display: none; animation: fadeIn 0.4s ease-out forwards; }
         .page-active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col lg:flex-row h-screen overflow-hidden">
 
-    <aside class="lg:w-64 w-full bg-white border-r border-slate-200 p-6 flex flex-col z-50">
-        <div class="mb-10 flex flex-col items-center lg:items-start">
+    <aside class="lg:w-64 w-full bg-white border-b lg:border-r border-slate-200 p-4 lg:p-6 flex flex-col z-50 shadow-sm">
+        <div class="mb-4 lg:mb-10 flex flex-row lg:flex-col items-baseline lg:items-start justify-between">
             <h1 class="text-2xl font-black italic tracking-tighter text-slate-900 uppercase">Gas Command</h1>
-            <p class="text-[9px] text-blue-600 font-bold tracking-[0.3em] uppercase mt-1">v5.2.0 Glass Tech</p>
+            <p class="text-[9px] text-blue-600 font-bold tracking-[0.3em] uppercase lg:mt-1 ml-2 lg:ml-0">v5.3.0 Mobile Pro</p>
         </div>
-        <nav class="space-y-2">
-            <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> 即時監控</button>
-            <button onclick="switchPage('schedule')" id="nav-schedule" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all"><i data-lucide="calendar-range" class="w-4 h-4"></i> 備刀排程</button>
-            <button onclick="switchPage('analysis')" id="nav-analysis" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> 數據中心</button>
+        <nav class="mobile-nav-scroll lg:space-y-2">
+            <button onclick="switchPage('monitor')" id="nav-monitor" class="mobile-nav-btn nav-active w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-black transition-all">即時監控</button>
+            <button onclick="switchPage('schedule')" id="nav-schedule" class="mobile-nav-btn w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-black text-slate-500 hover:bg-slate-100 transition-all">備刀排程</button>
+            <button onclick="switchPage('analysis')" id="nav-analysis" class="mobile-nav-btn w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-black text-slate-500 hover:bg-slate-100 transition-all">數據中心</button>
         </nav>
     </aside>
 
-    <main class="flex-1 overflow-hidden p-4 lg:p-10">
+    <main class="flex-1 overflow-hidden main-content p-10">
         <section id="page-monitor" class="page-content page-active h-full flex flex-col">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-3">
                 <div>
-                    <h2 class="text-adaptive-title text-5xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2>
-                    <p class="text-blue-600 text-xs font-bold tracking-widest mt-2 uppercase">高密度數據監控面板</p>
+                    <h2 class="header-title text-6xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2>
+                    <p class="text-blue-600 text-sm font-bold tracking-widest mt-2 uppercase">各區鋼瓶高密度監控</p>
                 </div>
                 <div class="flex gap-1 bg-slate-200/50 p-1 rounded-xl border border-slate-200">
-                    <button onclick="filterRegion('ALL')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm">全域</button>
-                    <button onclick="filterRegion('北區')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500">北區</button>
-                    <button onclick="filterRegion('中區')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500">中區</button>
-                    <button onclick="filterRegion('南區')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500">南區</button>
+                    <button onclick="filterRegion('ALL')" class="reg-btn px-5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white">全域</button>
+                    <button onclick="filterRegion('北區')" class="reg-btn px-5 py-1.5 rounded-lg text-xs font-bold text-slate-500">北區</button>
+                    <button onclick="filterRegion('中區')" class="reg-btn px-5 py-1.5 rounded-lg text-xs font-bold text-slate-500">中區</button>
+                    <button onclick="filterRegion('南區')" class="reg-btn px-5 py-1.5 rounded-lg text-xs font-bold text-slate-500">南區</button>
                 </div>
             </header>
-            
-            <div id="monitor-grid" class="card-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto flex-1 custom-scrollbar pb-10"></div>
+            <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto flex-1 custom-scrollbar pb-10"></div>
         </section>
 
-        <section id="page-analysis" class="page-content">...</section>
-        <section id="page-schedule" class="page-content">...</section>
+        <section id="page-analysis" class="page-content h-full flex flex-col">
+            <header class="mb-6">
+                <h2 class="header-title text-6xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Analytics</h2>
+                <p class="text-blue-600 text-sm font-bold tracking-widest mt-2 uppercase">2026 年度數據分析</p>
+            </header>
+            <div class="grid grid-cols-3 gap-2 mb-6">
+                <button onclick="updateAnalysisRegion('北區')" class="ana-reg-btn py-4 bg-slate-800 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-lg">北區分析</button>
+                <button onclick="updateAnalysisRegion('中區')" class="ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200">中區分析</button>
+                <button onclick="updateAnalysisRegion('南區')" class="ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200">南區分析</button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <h3 class="text-xl font-black text-slate-800 mb-4 italic border-b pb-2">📋 勤務頻次統計</h3>
+                    <div id="ana-hospital-list" class="space-y-2"></div>
+                </div>
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-center min-h-[300px]">
+                    <h3 class="text-xl font-black text-slate-800 mb-8 italic text-center">📉 平均換氣壓力 (PSI)</h3>
+                    <div class="flex justify-around items-center">
+                        <div class="text-center">
+                            <p class="text-xs font-bold text-blue-500 uppercase mb-2">Argon (Ar)</p>
+                            <p id="ana-ar-psi" class="text-6xl font-black text-slate-900 font-mono italic">--</p>
+                        </div>
+                        <div class="w-px h-20 bg-slate-100"></div>
+                        <div class="text-center">
+                            <p class="text-xs font-bold text-purple-500 uppercase mb-2">Helium (He)</p>
+                            <p id="ana-he-psi" class="text-6xl font-black text-slate-900 font-mono italic">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-schedule" class="page-content h-full">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                <div class="lg:col-span-4 overflow-y-auto custom-scrollbar">
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm mb-6">
+                        <h3 id="formTitle" class="text-2xl font-black mb-4 text-blue-600 italic">Add Schedule</h3>
+                        <form id="surgeryForm" class="space-y-4">
+                            <input type="hidden" id="editId">
+                            <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase">負責人</label><select id="userName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm"></select></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase">日期</label><input type="date" id="surgeryDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm"></div>
+                                <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase">星期</label><div id="weekdayDisplay" class="py-2 bg-blue-50 text-blue-600 font-black rounded-xl text-center">--</div></div>
+                            </div>
+                            <div><label class="text-xs font-bold text-slate-400 block mb-1 uppercase">醫院</label><select id="hospitalName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm"></select></div>
+                            <div class="p-4 bg-blue-50 rounded-2xl space-y-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div><span class="text-[10px] text-blue-500 font-black">HE</span><select id="heGas" class="gas-sel w-full rounded-lg py-1 text-xs"></select></div>
+                                    <div><span class="text-[10px] text-blue-500 font-black">AR1</span><select id="ar1Gas" class="gas-sel w-full rounded-lg py-1 text-xs"></select></div>
+                                </div>
+                            </div>
+                            <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 rounded-xl font-black text-white text-xs uppercase italic">Confirm Task</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="lg:col-span-8 overflow-y-auto custom-scrollbar pb-20">
+                    <div id="scheduleGrid" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div id="monitor-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-        <div class="bg-white/90 backdrop-blur-xl w-full max-w-4xl rounded-[2.5rem] p-8 relative border border-white shadow-2xl">
-            <button onclick="closeMonitorModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-transform hover:rotate-90"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <div class="bg-white/95 backdrop-blur-xl w-full max-w-4xl rounded-[2.5rem] p-6 relative border border-white shadow-2xl">
+            <button onclick="closeMonitorModal()" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x" class="w-8 h-8"></i></button>
             <div id="monitor-modal-content"></div>
         </div>
     </div>
 
     <script>
-        // ... (SPREADSHEET_ID, API_KEY 等變數保持不變) ...
         const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
         const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyhq3KFBvN-HQzb1eeIx2Bdg_6ZyFJMr4KxJbKajzkSMxMMZNwDHI4koSALFD6wz5d6kA/exec'; 
@@ -94,16 +158,21 @@
         
         let latestMonitorData = []; 
         let historicalRows = []; 
+        let localSchedules = []; 
         let currentMonitorFilter = 'ALL';
 
         function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
 
         window.onload = async () => { 
+            initForms();
             await fetchMonitorData(); 
+            await loadSchedulesFromCloud();
             await preLoadHistoricalData(); 
+            updateAnalysisRegion('北區');
             safeLucide(); 
         };
 
+        // --- 核心邏輯 ---
         async function fetchMonitorData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:L2000?key=${API_KEY}`;
             try {
@@ -139,40 +208,38 @@
                 const isCrit = item.pressure < 3000;
                 const pct = Math.min((item.pressure / 6000) * 100, 100);
                 return `
-                <div onclick="showMonitorDetail('${item.gas}')" class="${glassClass} monitor-card p-5 rounded-[2rem] cursor-pointer hover:scale-[1.02] transition-all relative overflow-hidden flex flex-col justify-between h-[300px]">
+                <div onclick="showMonitorDetail('${item.gas}')" class="${glassClass} p-5 rounded-[2.2rem] cursor-pointer active:scale-95 transition-all relative overflow-hidden flex flex-col justify-between h-[320px]">
                     <div class="flex justify-between items-start">
-                        <div class="space-y-0">
+                        <div class="space-y-0.5">
                             <h3 class="text-4xl font-black text-slate-900 italic leading-none">${item.gas}</h3>
-                            <p class="text-[12px] font-black text-blue-600 uppercase tracking-tighter mt-1">${item.region} · ${item.location}</p>
+                            <p class="text-[13px] font-black text-blue-700 uppercase leading-none mt-1.5">${item.region} · ${item.location}</p>
                         </div>
-                        <div class="text-right bg-white/40 px-3 py-2 rounded-2xl border border-white/50">
-                            <p class="text-[10px] text-slate-500 font-bold uppercase leading-none">用途</p>
-                            <p class="text-blue-800 font-black text-base italic leading-tight">${item.reason}</p>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase leading-none mt-1">備刀日期</p>
-                            <p class="text-slate-800 font-black text-sm italic leading-tight">${item.standbyDate || '無'}</p>
+                        <div class="text-right bg-white/50 px-3 py-2 rounded-2xl border border-white/60">
+                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none">用途</p>
+                            <p class="text-blue-800 font-black text-xl italic leading-tight">${item.reason}</p>
+                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none mt-2">備刀日期</p>
+                            <p class="text-slate-800 font-black text-base italic leading-tight">${item.standbyDate || '無'}</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                            <div class="flex items-baseline gap-1 leading-none mb-1">
-                                <span class="text-5xl font-mono font-black text-slate-900 italic">${item.pressure.toLocaleString()}</span>
-                                <span class="text-sm font-bold text-slate-400">PSI</span>
-                            </div>
-                            <div class="w-full h-2.5 bg-white/50 rounded-full overflow-hidden border border-white/30 shadow-inner">
-                                <div class="h-full ${isCrit ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${pct}%"></div>
-                            </div>
+                    <div>
+                        <div class="flex items-baseline gap-1 leading-none mb-1.5">
+                            <span class="text-5xl font-mono font-black text-slate-950 italic">${item.pressure.toLocaleString()}</span>
+                            <span class="text-lg font-black text-slate-400 italic">PSI</span>
+                        </div>
+                        <div class="w-full h-3 bg-white/60 rounded-full overflow-hidden border border-white/40">
+                            <div class="h-full ${isCrit ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-600'}" style="width: ${pct}%"></div>
                         </div>
                     </div>
 
-                    <div class="flex justify-between items-end pt-3 border-t border-slate-900/5">
-                        <div class="bg-white/30 px-3 py-1 rounded-lg">
-                            <p class="text-[9px] text-slate-500 font-bold uppercase leading-none mb-0.5">填報人</p>
-                            <p class="text-slate-800 font-black text-sm">${item.user}</p>
+                    <div class="flex justify-between items-end pt-3 border-t border-slate-900/10">
+                        <div>
+                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none mb-1">人名</p>
+                            <p class="text-slate-900 font-black text-lg leading-none">${item.user}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[9px] text-slate-500 font-bold uppercase leading-none mb-0.5">填入時間</p>
-                            <p class="text-slate-600 font-mono font-bold text-[11px] leading-none">${item.time}</p>
+                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none mb-1">填入時間</p>
+                            <p class="text-slate-700 font-mono font-black text-xs leading-none tracking-tighter">${item.time}</p>
                         </div>
                     </div>
                 </div>`;
@@ -185,49 +252,69 @@
             if (!item) return;
             const history = historicalRows.filter(r => r[2] === gasName).slice(-5).reverse();
             let historyHtml = history.map(h => {
-                const isLow = (parseInt(h[7]) || 0) < 3000;
+                const hP = parseInt(h[7]) || 0;
                 return `
                 <div class="flex justify-between items-center py-3 border-b border-slate-100 last:border-0">
-                    <div class="text-xs">
-                        <p class="font-black text-slate-800">${h[6]} @ ${h[5]}</p>
-                        <p class="text-[10px] text-slate-400 font-bold">BY: ${h[1]} · ${h[0]}</p>
+                    <div class="text-xs leading-tight">
+                        <p class="font-black text-slate-800 mb-1">${h[6]} @ ${h[5]}</p>
+                        <div class="flex gap-2 text-[10px] text-slate-500 font-black italic">
+                           <span>BY: ${h[1]}</span>
+                           <span>${h[0]}</span>
+                        </div>
                     </div>
-                    <div class="text-lg font-mono font-black ${isLow ? 'text-red-500' : 'text-blue-600'} italic">${parseInt(h[7]).toLocaleString()} <span class="text-[10px]">PSI</span></div>
+                    <div class="text-xl font-mono font-black ${hP < 3000 ? 'text-red-500' : 'text-blue-600'} italic">${hP.toLocaleString()}</div>
                 </div>`;
             }).join('');
 
             document.getElementById('monitor-modal-content').innerHTML = `
-                <div class="flex flex-col md:flex-row gap-8">
-                    <div class="md:w-[30%] border-r border-slate-100 pr-6">
-                        <h2 class="text-5xl font-black text-slate-900 italic leading-none mb-4">${item.gas}</h2>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="md:w-[30%] border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0 md:pr-6">
+                        <h2 class="text-5xl font-black text-slate-950 italic leading-none mb-4">${item.gas}</h2>
                         <div class="space-y-4">
-                            <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                                <p class="text-[10px] text-slate-400 font-black uppercase mb-1">當前存量</p>
-                                <p class="text-4xl font-black text-slate-900 font-mono italic leading-none">${item.pressure.toLocaleString()}</p>
+                            <div class="bg-blue-50/70 p-4 rounded-2xl border border-blue-100">
+                                <p class="text-[11px] text-slate-500 font-black uppercase mb-1">當前存量</p>
+                                <p class="text-5xl font-black text-slate-950 font-mono italic leading-none">${item.pressure.toLocaleString()}</p>
                             </div>
-                            <div class="px-4">
-                                <p class="text-[10px] text-slate-400 font-black uppercase mb-1">目前用途</p>
-                                <p class="text-blue-700 font-black text-lg italic leading-none">${item.reason}</p>
+                            <div class="px-2">
+                                <p class="text-[11px] text-slate-500 font-black uppercase mb-1">目前用途</p>
+                                <p class="text-blue-800 font-black text-xl italic leading-none">${item.reason}</p>
                             </div>
                         </div>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest italic flex items-center gap-2">
-                             📜 最近 5 筆歷史軌跡
-                        </h3>
+                        <h3 class="text-xs font-black text-slate-400 uppercase mb-3 tracking-widest italic flex items-center gap-2">📜 最近 5 筆歷史軌跡</h3>
                         <div class="space-y-1">${historyHtml || '<p class="text-xs text-slate-300">無數據</p>'}</div>
                     </div>
                 </div>
-                <button onclick="closeMonitorModal()" class="w-full mt-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm tracking-[0.4em] hover:bg-black transition-all uppercase italic">CLOSE</button>
+                <button onclick="closeMonitorModal()" class="w-full mt-6 py-5 bg-slate-950 text-white rounded-2xl font-black text-sm tracking-[0.4em] uppercase italic">CLOSE</button>
             `;
             document.getElementById('monitor-modal').classList.remove('hidden'); safeLucide();
         }
 
-        // --- 📊 分析頁面更新 ---
+        // --- 排程與分析功能 ---
+        function switchPage(page) {
+            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active'));
+            document.getElementById('page-' + page).classList.add('page-active');
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => btn.classList.remove('nav-active'));
+            const targetNav = (page === 'monitor') ? 'nav-monitor' : (page === 'schedule' ? 'nav-schedule' : 'nav-analysis');
+            document.getElementById(targetNav).classList.add('nav-active');
+            safeLucide();
+        }
+
+        function filterRegion(r) { 
+            currentMonitorFilter = r; 
+            document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r) || (r==='ALL' && b.innerText==='全域')));
+            document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.classList.contains('bg-blue-600')));
+            renderMonitorCards(); 
+        }
+
         function updateAnalysisRegion(region) {
             document.querySelectorAll('.ana-reg-btn').forEach(btn => {
-                if(btn.innerText.includes(region)) btn.classList.add('ana-reg-btn-active');
-                else btn.classList.remove('ana-reg-btn-active');
+                if(btn.innerText.includes(region)) {
+                    btn.className = "ana-reg-btn py-4 bg-slate-800 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-lg";
+                } else {
+                    btn.className = "ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200";
+                }
             });
             const hospitalCount = {};
             let arTotal = 0, arCount = 0, heTotal = 0, heCount = 0;
@@ -244,20 +331,17 @@
             const listArea = document.getElementById('ana-hospital-list');
             const sorted = Object.entries(hospitalCount).sort((a,b) => b[1] - a[1]);
             listArea.innerHTML = sorted.length > 0 ? sorted.map(([name, count]) => `
-                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="font-bold text-slate-700">${name}</span><span class="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-black italic leading-none">${count} VISITS</span></div>
-            `).join('') : '<p class="text-slate-400 text-center py-10 leading-none">2026 尚無紀錄</p>';
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="font-bold text-slate-700">${name}</span><span class="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-black italic">${count} VISITS</span></div>
+            `).join('') : '<p class="text-slate-400 text-center py-10">2026 尚無紀錄</p>';
             document.getElementById('ana-ar-psi').innerText = arCount > 0 ? Math.round(arTotal/arCount) : "--";
             document.getElementById('ana-he-psi').innerText = heCount > 0 ? Math.round(heTotal/heCount) : "--";
         }
 
-        // --- 📡 其餘功能保持不變 ---
-        function switchPage(p) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-'+p).classList.add('page-active'); document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active')); document.getElementById('nav-'+p).classList.add('nav-active'); safeLucide(); }
-        function filterRegion(r) { currentMonitorFilter = r; document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r) || (r==='ALL' && b.innerText==='全域'))); document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.classList.contains('bg-blue-600'))); renderMonitorCards(); }
-        function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
         async function loadSchedulesFromCloud() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
             try { const res = await fetch(url); const data = await res.json(); if (data.values) { localSchedules = data.values.map(r => ({ id: parseInt(r[0]), date: r[1], weekday: r[2], hospital: r[3], user: r[4], cases: r[5], he: r[6], ar1: r[7], ar2: r[8], status: r[9] })); renderScheduleList(); } } catch (e) { console.error(e); }
         }
+
         function renderScheduleList() {
             const grid = document.getElementById('scheduleGrid'); const now = new Date(); now.setHours(0,0,0,0);
             const sorted = [...localSchedules].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -265,27 +349,33 @@
             const active = sorted.filter(s => new Date(s.date) >= now && s.status === 'pending');
             const archive = sorted.filter(s => (s.status === 'done' || s.status === 'cancelled') && (new Date() - new Date(s.date)) / (1000*60*60*24) <= 7);
             let html = '';
-            if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-sm font-black text-amber-600 uppercase mb-3 leading-none tracking-widest">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'status-alert')).join('') + `</div>`;
-            html += `<div class="mb-4"><h4 class="text-sm font-black text-slate-400 uppercase mb-3 leading-none tracking-widest">📅 預定備刀</h4>` + (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<div class="text-base text-slate-300 italic py-10 text-center">目前無任務</div>`) + `</div>`;
-            if(archive.length > 0) html += `<div class="mt-12 border-t border-slate-200 pt-6"><button onclick="toggleArchive()" class="w-full py-4 bg-slate-100 rounded-2xl text-sm font-black text-slate-500 uppercase flex justify-between px-6"><span>顯示 7 天內歷史紀錄</span><i data-lucide="chevron-down"></i></button><div id="archiveContent" class="hidden space-y-4 mt-6">` + archive.map(i => getItemHtml(i, i.status === 'done' ? 'status-done' : 'status-cancelled')).join('') + `</div></div>`;
+            if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-xs font-black text-amber-600 uppercase mb-2">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'border-l-4 border-amber-500')).join('') + `</div>`;
+            html += `<div class="mb-4"><h4 class="text-xs font-black text-slate-400 uppercase mb-2">📅 預定備刀</h4>` + (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<p class="text-sm text-slate-300 italic text-center py-4">無任務</p>`) + `</div>`;
             grid.innerHTML = html; safeLucide();
         }
+
         function getItemHtml(item, customClass = '') {
-            let badge = item.status === 'done' ? `<span class="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-xs font-black italic leading-none">DONE</span>` : (item.status === 'cancelled' ? `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-xs font-black italic leading-none">CANCELLED</span>` : '');
-            return `<div onclick="editSchedule(${item.id})" class="item-row bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 cursor-pointer shadow-sm ${customClass} transition-all"><div class="flex flex-col items-center justify-center min-w-[100px] border-r border-slate-100 pr-6"><span class="text-blue-500 font-black text-xs uppercase mb-2 leading-none">${item.weekday}</span><span class="text-slate-900 font-mono font-black text-2xl leading-none">${item.date.slice(5)}</span></div><div class="flex-1 text-center md:text-left"><div class="flex items-center gap-3 justify-center md:justify-start mb-2"><h4 class="text-2xl font-black text-slate-800 uppercase italic leading-none">${item.hospital}</h4>${badge}</div><div class="text-xs font-bold text-slate-400 font-mono">User: ${item.user} | Cases: ${item.cases}</div></div><div class="flex gap-3"><div class="bg-blue-50 border border-blue-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-500 italic mb-1 leading-none">HE</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.he}</p></div><div class="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-slate-500 italic mb-1 leading-none">AR1</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.ar1}</p></div></div></div>`;
+            return `<div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm ${customClass} mb-2">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black text-blue-500 uppercase">${item.weekday} ${item.date.slice(5)}</span>
+                    <span class="text-lg font-black text-slate-800">${item.hospital}</span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">BY: ${item.user}</span>
+                </div>
+                <div class="flex gap-2">
+                    <div class="bg-blue-50 px-3 py-1 rounded-lg text-center"><p class="text-[8px] font-black text-blue-500 leading-none">HE</p><p class="text-sm font-black text-slate-800">${item.he}</p></div>
+                    <div class="bg-slate-50 px-3 py-1 rounded-lg text-center"><p class="text-[8px] font-black text-slate-500 leading-none">AR1</p><p class="text-sm font-black text-slate-800">${item.ar1}</p></div>
+                </div>
+            </div>`;
         }
+
         function initForms() {
             const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName'); const gSels = document.querySelectorAll('.gas-sel');
             USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
             for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
             document.getElementById('surgeryDate').addEventListener('input', (e) => { const days = ['週日','週一','週二','週三','週四','週五','週六']; document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--'; });
-            document.getElementById('surgeryForm').addEventListener('submit', async function(e) { e.preventDefault(); const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "SYNCING..."; const editId = document.getElementById('editId').value; const data = { id: editId ? parseInt(editId) : Date.now(), user: document.getElementById('userName').value, date: document.getElementById('surgeryDate').value, weekday: document.getElementById('weekdayDisplay').innerText, hospital: document.getElementById('hospitalName').value, cases: document.getElementById('casesCount').value, he: document.getElementById('heGas').value, ar1: document.getElementById('ar1Gas').value, ar2: document.getElementById('ar2Gas').value || '無', status: 'pending' }; const success = await saveToCloud(data); if (success) { if (editId) { const idx = localSchedules.findIndex(s => s.id === data.id); localSchedules[idx] = data; } else { localSchedules.push(data); } resetForm(); renderScheduleList(); } btn.disabled = false; btn.innerText = "Confirm Task"; alert("指令已發送！"); });
         }
-        async function saveToCloud(payload) { try { fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "saveSchedule", data: payload }) }); return true; } catch (e) { return false; } }
-        function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Schedule"; document.getElementById('editControls').classList.add('hidden'); document.getElementById('submitBtn').classList.remove('hidden'); }
-        async function completeSelected() { if(confirm('確認完工？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'done'; await saveToCloud(item); resetForm(); renderScheduleList(); } }
-        async function cancelSelected() { if(confirm('確定取消？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'cancelled'; await saveToCloud(item); resetForm(); renderScheduleList(); } }
-        function toggleArchive() { const content = document.getElementById('archiveContent'); content.classList.toggle('hidden'); }
+
+        function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
     </script>
 </body>
 </html>
