@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAS 戰情監控中心 v4.7.2</title>
+    <title>GAS 戰情監控中心 v4.8.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
     <aside class="lg:w-72 w-full lg:h-screen bg-white border-r border-slate-200 p-6 flex flex-col z-50">
         <div class="mb-10 text-center lg:text-left">
             <h1 class="text-3xl font-black italic tracking-tighter text-slate-900 uppercase leading-none">Gas Command</h1>
-            <p class="text-[10px] text-blue-600 font-bold tracking-widest uppercase mt-2">v4.7.2 Elite Sync</p>
+            <p class="text-[10px] text-blue-600 font-bold tracking-widest uppercase mt-2">v4.8.0 Analytical Pro</p>
         </div>
         <nav class="space-y-4 flex-1">
             <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-active w-full flex items-center gap-4 px-5 py-4 rounded-xl text-base font-bold transition-all"><i data-lucide="layout-dashboard"></i> 即時存量監控</button>
@@ -41,8 +41,8 @@
 
     <main class="flex-1 overflow-hidden p-6 lg:p-12">
         <section id="page-monitor" class="page-content page-active">
-            <header class="flex justify-between items-end mb-10">
-                <div><h2 class="text-6xl font-black italic text-slate-900 uppercase tracking-tighter">Live Status</h2><p class="text-blue-600 text-sm font-bold tracking-widest mt-3 uppercase">全台鋼瓶最新存量</p></div>
+            <header class="flex justify-between items-end mb-6">
+                <div><h2 class="text-6xl font-black italic text-slate-900 uppercase tracking-tighter">Live Status</h2><p class="text-blue-600 text-sm font-bold tracking-widest mt-3 uppercase">全台鋼瓶存量與勤務分析</p></div>
                 <div class="flex gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
                     <button onclick="filterRegion('ALL')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white">全域</button>
                     <button onclick="filterRegion('北區')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-500">北區</button>
@@ -50,7 +50,31 @@
                     <button onclick="filterRegion('南區')" class="reg-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-500">南區</button>
                 </div>
             </header>
-            <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar pb-20"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-slate-800 text-white p-6 rounded-[2rem] border border-slate-700 shadow-xl">
+                    <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest leading-none">📋 2026 年度各區備刀勤務統計</h3>
+                    <div id="hospitalStatsArea" class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                        <p class="text-xs text-slate-500 italic">分析引擎啟動中...</p>
+                    </div>
+                </div>
+                <div class="bg-slate-800 text-white p-6 rounded-[2rem] border border-slate-700 shadow-xl flex flex-col justify-between">
+                    <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest leading-none">📉 鋼瓶換氣 (待灌氣) 平均壓力</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="border-r border-slate-700">
+                            <p class="text-[10px] text-blue-500 font-bold uppercase mb-1">Argon (Ar)</p>
+                            <p id="avgArPsi" class="text-3xl font-black text-white italic">-- <span class="text-xs text-slate-500">PSI</span></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-purple-500 font-bold uppercase mb-1">Helium (He)</p>
+                            <p id="avgHePsi" class="text-3xl font-black text-white italic">-- <span class="text-xs text-slate-500">PSI</span></p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-4 italic leading-none">※ 依據「待灌氣」歷史紀錄自動演算</p>
+                </div>
+            </div>
+
+            <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 overflow-y-auto max-h-[calc(100vh-420px)] custom-scrollbar pb-20"></div>
         </section>
 
         <section id="page-schedule" class="page-content">
@@ -106,7 +130,6 @@
     <script>
         const SPREADSHEET_ID = '1Vp78y7ACG9wx3RxtAwW-s4YE9l2Ml-hcUjQ2W7QLpXU';
         const API_KEY = 'AIzaSyCQzF6JI8Oa9VsiWq5Qgg56nDX6AtXk_18'; 
-        // 🚀 請換成您最新的 GAS 部署網址
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyhq3KFBvN-HQzb1eeIx2Bdg_6ZyFJMr4KxJbKajzkSMxMMZNwDHI4koSALFD6wz5d6kA/exec'; 
 
         const USERS = ["杜孟擇", "張家榮"];
@@ -114,13 +137,78 @@
         
         let latestMonitorData = []; 
         let localSchedules = []; 
+        let historicalRecords = []; // 🚀 存儲歷史紀錄
         let currentMonitorFilter = 'ALL';
         let archiveExpanded = false;
 
         function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
 
-        window.onload = () => { initForms(); fetchMonitorData(); loadSchedulesFromCloud(); safeLucide(); };
+        window.onload = async () => { 
+            initForms(); 
+            await fetchMonitorData(); 
+            await loadSchedulesFromCloud(); 
+            await runDataAnalysis(); // 🚀 初始化分析引擎
+            safeLucide(); 
+        };
 
+        // --- 📊 數據分析引擎核心 ---
+        async function runDataAnalysis() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:H2000?key=${API_KEY}`;
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                const rows = result.values || [];
+
+                const hospitalCount = {};
+                let arPsiTotal = 0, arCount = 0;
+                let hePsiTotal = 0, heCount = 0;
+
+                rows.forEach(row => {
+                    const time = row[0] || "";
+                    const gasID = row[2] || "";
+                    const region = row[3] || "";
+                    const hospital = row[5] || "";
+                    const reason = row[6] || "";
+                    const psi = parseInt(row[7]) || 0;
+
+                    // 1. 2026 勤務統計 (備刀)
+                    if (time.includes("2026") && hospital) {
+                        const key = `[${region}] ${hospital}`;
+                        hospitalCount[key] = (hospitalCount[key] || 0) + 1;
+                    }
+
+                    // 2. 待灌氣平均壓力
+                    if (reason === "待灌氣") {
+                        if (gasID.toLowerCase().startsWith("ar")) {
+                            arPsiTotal += psi; arCount++;
+                        } else if (gasID.toLowerCase().startsWith("he")) {
+                            hePsiTotal += psi; heCount++;
+                        }
+                    }
+                });
+
+                // 渲染醫院統計
+                const statsArea = document.getElementById('hospitalStatsArea');
+                const sortedHospitals = Object.entries(hospitalCount).sort((a, b) => b[1] - a[1]);
+                if (sortedHospitals.length > 0) {
+                    statsArea.innerHTML = sortedHospitals.map(([name, count]) => `
+                        <div class="flex justify-between items-center text-xs border-b border-slate-700 pb-1 py-1">
+                            <span class="text-slate-300 font-medium tracking-tight">${name}</span>
+                            <span class="bg-blue-600/30 text-blue-400 px-2 py-0.5 rounded-full font-bold">${count} 次</span>
+                        </div>
+                    `).join('');
+                } else {
+                    statsArea.innerHTML = '<p class="text-xs text-slate-500 italic">2026 目前尚無紀錄</p>';
+                }
+
+                // 渲染平均壓力
+                document.getElementById('avgArPsi').innerHTML = `${arCount > 0 ? Math.round(arPsiTotal/arCount) : '--'} <span class="text-xs text-slate-500 font-normal">PSI</span>`;
+                document.getElementById('avgHePsi').innerHTML = `${heCount > 0 ? Math.round(hePsiTotal/heCount) : '--'} <span class="text-xs text-slate-500 font-normal">PSI</span>`;
+
+            } catch (error) { console.error("分析失敗:", error); }
+        }
+
+        // --- 📡 資料獲取功能 ---
         async function loadSchedulesFromCloud() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
             try {
@@ -134,75 +222,6 @@
                     renderScheduleList();
                 }
             } catch (e) { console.error("排程載入失敗", e); }
-        }
-
-        async function saveToCloud(payload) {
-    try {
-        // 使用 fetch 發送 POST 給 GAS 的 doPost
-        fetch(GAS_WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors", // 🚀 關鍵：這是為了不讓瀏覽器報 CORS 錯誤
-            cache: "no-cache",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-                action: "saveSchedule",
-                data: payload
-            })
-        });
-        
-        // 因為是 no-cors，我們無法讀取回傳值，但資料會送達
-        console.log("資料發送完成");
-        return true; 
-    } catch (e) {
-        console.error("發送失敗", e);
-        return false;
-    }
-}
-       
-
-        function initForms() {
-            const uSel = document.getElementById('userName'); 
-            const hSel = document.getElementById('hospitalName');
-            const gSels = document.querySelectorAll('.gas-sel');
-            USERS.forEach(u => uSel.add(new Option(u, u))); 
-            HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
-            for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
-            
-            document.getElementById('surgeryDate').addEventListener('input', (e) => {
-                const days = ['週日','週一','週二','週三','週四','週五','週六'];
-                document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--';
-            });
-
-            document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true; btn.innerText = "SYNCING...";
-                
-                const editId = document.getElementById('editId').value;
-                const data = {
-                    id: editId ? parseInt(editId) : Date.now(),
-                    user: document.getElementById('userName').value, 
-                    date: document.getElementById('surgeryDate').value,
-                    weekday: document.getElementById('weekdayDisplay').innerText, 
-                    hospital: document.getElementById('hospitalName').value,
-                    cases: document.getElementById('casesCount').value, 
-                    he: document.getElementById('heGas').value,
-                    ar1: document.getElementById('ar1Gas').value, 
-                    ar2: document.getElementById('ar2Gas').value || '無', 
-                    status: 'pending' 
-                };
-
-                const success = await saveToCloud(data);
-                if (success) {
-                    if (editId) {
-                        const idx = localSchedules.findIndex(s => s.id === data.id);
-                        localSchedules[idx] = data;
-                    } else { localSchedules.push(data); }
-                    resetForm(); renderScheduleList();
-                }
-                btn.disabled = false; btn.innerText = "Confirm Task";
-                alert("指令已發送！資料更新約需 5-10 秒。");
-            });
         }
 
         async function fetchMonitorData() {
@@ -226,6 +245,18 @@
             } catch (e) { console.error(e); }
         }
 
+        async function saveToCloud(payload) {
+            try {
+                await fetch(GAS_WEB_APP_URL, {
+                    method: "POST", mode: "no-cors", cache: "no-cache",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: "saveSchedule", data: payload })
+                });
+                return true; 
+            } catch (e) { console.error("發送失敗", e); return false; }
+        }
+
+        // --- 🎨 渲染與互動功能 (維持原有邏輯) ---
         function renderMonitorCards() {
             const grid = document.getElementById('monitor-grid');
             const filtered = currentMonitorFilter === 'ALL' ? latestMonitorData : latestMonitorData.filter(d => d.region === currentMonitorFilter);
@@ -251,6 +282,47 @@
             safeLucide();
         }
 
+        // ... (其餘功能如 initForms, renderScheduleList, editSchedule 等維持原狀) ...
+        function initForms() {
+            const uSel = document.getElementById('userName'); 
+            const hSel = document.getElementById('hospitalName');
+            const gSels = document.querySelectorAll('.gas-sel');
+            USERS.forEach(u => uSel.add(new Option(u, u))); 
+            HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
+            for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
+            document.getElementById('surgeryDate').addEventListener('input', (e) => {
+                const days = ['週日','週一','週二','週三','週四','週五','週六'];
+                document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--';
+            });
+            document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true; btn.innerText = "SYNCING...";
+                const editId = document.getElementById('editId').value;
+                const data = {
+                    id: editId ? parseInt(editId) : Date.now(),
+                    user: document.getElementById('userName').value, 
+                    date: document.getElementById('surgeryDate').value,
+                    weekday: document.getElementById('weekdayDisplay').innerText, 
+                    hospital: document.getElementById('hospitalName').value,
+                    cases: document.getElementById('casesCount').value, 
+                    he: document.getElementById('heGas').value,
+                    ar1: document.getElementById('ar1Gas').value, 
+                    ar2: document.getElementById('ar2Gas').value || '無', 
+                    status: 'pending' 
+                };
+                const success = await saveToCloud(data);
+                if (success) {
+                    if (editId) {
+                        const idx = localSchedules.findIndex(s => s.id === data.id);
+                        localSchedules[idx] = data;
+                    } else { localSchedules.push(data); }
+                    resetForm(); renderScheduleList();
+                }
+                btn.disabled = false; btn.innerText = "Confirm Task";
+                alert("指令已發送！資料更新約需 5-10 秒。");
+            });
+        }
         function renderScheduleList() {
             const grid = document.getElementById('scheduleGrid');
             const now = new Date(); now.setHours(0,0,0,0);
@@ -258,63 +330,24 @@
             const alerts = sorted.filter(s => new Date(s.date) < now && s.status === 'pending');
             const active = sorted.filter(s => new Date(s.date) >= now && s.status === 'pending');
             const archive = sorted.filter(s => (s.status === 'done' || s.status === 'cancelled') && (new Date() - new Date(s.date)) / (1000*60*60*24) <= 7);
-
             let html = '';
             if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-sm font-black text-amber-600 uppercase mb-3">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'status-alert')).join('') + `</div>`;
-            html += `<div class="mb-4"><h4 class="text-sm font-black text-slate-400 uppercase mb-3">📅 預定備刀</h4>` + 
-                    (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<div class="text-base text-slate-300 italic py-10 text-center">目前無任務</div>`) + `</div>`;
-            
+            html += `<div class="mb-4"><h4 class="text-sm font-black text-slate-400 uppercase mb-3">📅 預定備刀</h4>` + (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<div class="text-base text-slate-300 italic py-10 text-center">目前無任務</div>`) + `</div>`;
             if(archive.length > 0) {
-                html += `<div class="mt-12 border-t border-slate-200 pt-6">
-                    <button onclick="toggleArchive()" class="w-full py-4 bg-slate-100 rounded-2xl text-sm font-black text-slate-500 uppercase flex justify-between px-6 hover:bg-slate-200 transition-colors shadow-sm">
-                        <span>顯示 7 天內歷史紀錄 (${archive.length})</span>
-                        <i data-lucide="${archiveExpanded ? 'chevron-up' : 'chevron-down'}"></i>
-                    </button>
-                    <div id="archiveContent" class="${archiveExpanded ? 'block' : 'hidden'} space-y-4 mt-6">` + archive.map(i => getItemHtml(i, i.status === 'done' ? 'status-done' : 'status-cancelled')).join('') + `</div></div>`;
+                html += `<div class="mt-12 border-t border-slate-200 pt-6"><button onclick="toggleArchive()" class="w-full py-4 bg-slate-100 rounded-2xl text-sm font-black text-slate-500 uppercase flex justify-between px-6 hover:bg-slate-200 transition-colors shadow-sm"><span>顯示 7 天內歷史紀錄 (${archive.length})</span><i data-lucide="${archiveExpanded ? 'chevron-up' : 'chevron-down'}"></i></button><div id="archiveContent" class="${archiveExpanded ? 'block' : 'hidden'} space-y-4 mt-6">` + archive.map(i => getItemHtml(i, i.status === 'done' ? 'status-done' : 'status-cancelled')).join('') + `</div></div>`;
             }
-            grid.innerHTML = html;
-            safeLucide();
+            grid.innerHTML = html; safeLucide();
         }
-
         function getItemHtml(item, customClass = '') {
             let badge = '';
             if(item.status === 'done') badge = `<span class="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-xs font-black italic">DONE</span>`;
             if(item.status === 'cancelled') badge = `<span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-xs font-black italic">CANCELLED</span>`;
-            return `
-            <div onclick="editSchedule(${item.id})" class="item-row bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 cursor-pointer shadow-sm ${customClass} transition-all hover:border-blue-300">
-                <div class="flex flex-col items-center justify-center min-w-[100px] border-r border-slate-100 pr-6">
-                    <span class="text-blue-500 font-black text-xs uppercase italic leading-none mb-2">${item.weekday}</span>
-                    <span class="text-slate-900 font-mono font-black text-2xl tracking-tighter leading-none">${item.date.slice(5)}</span>
-                </div>
-                <div class="flex-1 text-center md:text-left">
-                    <div class="flex items-center gap-3 justify-center md:justify-start mb-2"><h4 class="text-2xl font-black text-slate-800 uppercase italic leading-none">${item.hospital}</h4>${badge}</div>
-                    <div class="text-xs font-bold text-slate-400 uppercase font-mono tracking-wide">User: ${item.user} | Cases: ${item.cases}</div>
-                </div>
-                <div class="flex gap-3">
-                    <div class="bg-blue-50 border border-blue-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-500 uppercase italic mb-1">HE</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.he}</p></div>
-                    <div class="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-slate-500 uppercase italic mb-1">AR1</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.ar1}</p></div>
-                </div>
-            </div>`;
+            return `<div onclick="editSchedule(${item.id})" class="item-row bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 cursor-pointer shadow-sm ${customClass} transition-all hover:border-blue-300"><div class="flex flex-col items-center justify-center min-w-[100px] border-r border-slate-100 pr-6"><span class="text-blue-500 font-black text-xs uppercase italic leading-none mb-2">${item.weekday}</span><span class="text-slate-900 font-mono font-black text-2xl tracking-tighter leading-none">${item.date.slice(5)}</span></div><div class="flex-1 text-center md:text-left"><div class="flex items-center gap-3 justify-center md:justify-start mb-2"><h4 class="text-2xl font-black text-slate-800 uppercase italic leading-none">${item.hospital}</h4>${badge}</div><div class="text-xs font-bold text-slate-400 uppercase font-mono tracking-wide">User: ${item.user} | Cases: ${item.cases}</div></div><div class="flex gap-3"><div class="bg-blue-50 border border-blue-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-500 uppercase italic mb-1">HE</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.he}</p></div><div class="bg-slate-50 border border-slate-100 px-6 py-3 rounded-2xl text-center"><p class="text-[10px] font-black text-slate-500 uppercase italic mb-1">AR1</p><p class="text-2xl font-black text-slate-800 font-mono leading-none">${item.ar1}</p></div></div></div>`;
         }
-
         function editSchedule(id) {
             const item = localSchedules.find(s => s.id === id);
-            document.getElementById('editId').value = item.id;
-            document.getElementById('userName').value = item.user;
-            document.getElementById('surgeryDate').value = item.date;
-            document.getElementById('hospitalName').value = item.hospital;
-            document.getElementById('casesCount').value = item.cases.includes('台') ? item.cases : item.cases + ' 台';
-            document.getElementById('heGas').value = item.he;
-            document.getElementById('ar1Gas').value = item.ar1;
-            document.getElementById('ar2Gas').value = item.ar2 === '無' ? '' : item.ar2;
-            document.getElementById('weekdayDisplay').innerText = item.weekday;
-            document.getElementById('formTitle').innerHTML = `Modify Task <span class="text-xs bg-blue-100 px-2 py-1 rounded-md ml-2 font-bold uppercase tracking-widest text-blue-600">Edit Mode</span>`;
-            document.getElementById('submitBtn').innerText = "Update Task Info";
-            document.getElementById('editControls').classList.remove('hidden');
-            document.getElementById('submitBtn').classList.add('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('editId').value = item.id; document.getElementById('userName').value = item.user; document.getElementById('surgeryDate').value = item.date; document.getElementById('hospitalName').value = item.hospital; document.getElementById('casesCount').value = item.cases.includes('台') ? item.cases : item.cases + ' 台'; document.getElementById('heGas').value = item.he; document.getElementById('ar1Gas').value = item.ar1; document.getElementById('ar2Gas').value = item.ar2 === '無' ? '' : item.ar2; document.getElementById('weekdayDisplay').innerText = item.weekday; document.getElementById('formTitle').innerHTML = `Modify Task <span class="text-xs bg-blue-100 px-2 py-1 rounded-md ml-2 font-bold uppercase tracking-widest text-blue-600">Edit Mode</span>`; document.getElementById('submitBtn').innerText = "Update Task Info"; document.getElementById('editControls').classList.remove('hidden'); document.getElementById('submitBtn').classList.add('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Schedule"; document.getElementById('submitBtn').innerText = "Confirm Task"; document.getElementById('editControls').classList.add('hidden'); document.getElementById('submitBtn').classList.remove('hidden'); }
         async function completeSelected() { if(confirm('確認完工？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'done'; await saveToCloud(item); resetForm(); renderScheduleList(); } }
         async function cancelSelected() { if(confirm('確定取消？')) { const id = parseInt(document.getElementById('editId').value); const item = localSchedules.find(s => s.id === id); item.status = 'cancelled'; await saveToCloud(item); resetForm(); renderScheduleList(); } }
