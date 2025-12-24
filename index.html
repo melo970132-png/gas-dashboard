@@ -2,145 +2,107 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAS 戰情監控中心 v5.4.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GAS 戰情中心 v5.5.0</title>
+    <link rel="icon" href="data:,"> 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { --bg-light: #f8fafc; }
-        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; }
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; margin: 0; padding: 0; }
         
-        /* ✨ 玻璃質感卡片 */
-        .glass-card-ar { background: rgba(224, 242, 254, 0.9); backdrop-filter: blur(12px); border: 2px solid #bae6fd; box-shadow: 0 8px 32px rgba(0,0,0,0.04); }
-        .glass-card-he { background: rgba(245, 243, 255, 0.9); backdrop-filter: blur(12px); border: 2px solid #ddd6fe; box-shadow: 0 8px 32px rgba(0,0,0,0.04); }
+        .glass-card-ar { background: rgba(224, 242, 254, 0.9); backdrop-filter: blur(12px); border: 2px solid #bae6fd; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .glass-card-he { background: rgba(245, 243, 255, 0.9); backdrop-filter: blur(12px); border: 2px solid #ddd6fe; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* 📱 手機選單：格線感設計 */
+        /* 📱 手機導覽列修正：三格均分 */
         @media (max-width: 1023px) {
             .mobile-grid-nav {
-                display: flex;
-                overflow-x: auto;
-                gap: 12px;
-                padding: 12px 16px;
+                display: flex !important;
+                width: 100%;
+                padding: 10px 16px;
+                gap: 8px;
                 background: white;
                 border-bottom: 1px solid #e2e8f0;
             }
             .nav-box {
-                flex: 0 0 calc(33.3% - 8px); /* 讓按鈕寬度剛好顯示 3 個多一點點 */
-                min-width: 100px;
+                flex: 1; /* 核心修正：讓三個按鈕平分寬度 */
                 text-align: center;
                 border: 1px solid #cbd5e1;
                 border-radius: 12px;
-                padding: 10px 4px;
-                font-weight: 800;
+                padding: 12px 2px;
+                font-size: 13px;
+                font-weight: 900;
                 color: #64748b;
-                background: #f1f5f9;
+                background: #f8fafc;
             }
-            .nav-box-active {
-                background: #2563eb !important;
-                color: white !important;
-                border-color: #2563eb !important;
-                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            }
-            .header-title { font-size: 3rem !important; }
+            .nav-box-active { background: #2563eb !important; color: white !important; border-color: #2563eb !important; }
+            .header-title { font-size: 2.8rem !important; }
         }
 
-        .nav-active { background: #2563eb !important; color: white !important; }
-        .page-content { display: none; animation: fadeIn 0.4s ease-out forwards; }
-        .page-active { display: block !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .page-content { display: none; }
+        .page-active { display: block !important; animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col lg:flex-row h-screen overflow-hidden">
 
-    <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-50 shadow-sm">
-        <div class="p-4 lg:p-6 flex flex-row lg:flex-col items-baseline lg:items-start justify-between border-b lg:border-b-0">
-            <h1 class="text-2xl font-black italic tracking-tighter text-slate-900 uppercase">Gas Command</h1>
-            <p class="text-[9px] text-blue-600 font-black tracking-[0.3em] uppercase lg:mt-1 ml-2">v5.4.0 STABLE</p>
+    <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-50">
+        <div class="p-4 lg:p-6 border-b lg:border-b-0">
+            <h1 class="text-xl lg:text-2xl font-black italic tracking-tighter text-slate-900 uppercase leading-none">Gas Command</h1>
+            <p class="text-[9px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v5.5.0 Stable Final</p>
         </div>
         
-        <nav class="mobile-grid-nav lg:flex-col lg:p-6 lg:space-y-2 lg:overflow-visible">
-            <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-box lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-4 lg:py-3 lg:text-sm nav-box-active transition-all">即時監控</button>
-            <button onclick="switchPage('schedule')" id="nav-schedule" class="nav-box lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-4 lg:py-3 lg:text-sm transition-all">備刀排程</button>
-            <button onclick="switchPage('analysis')" id="nav-analysis" class="nav-box lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-4 lg:py-3 lg:text-sm transition-all">數據分析</button>
+        <nav class="mobile-grid-nav lg:flex-col lg:p-6 lg:space-y-2">
+            <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-box lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-4 lg:py-3 nav-box-active">即時監控</button>
+            <button onclick="switchPage('schedule')" id="nav-schedule" class="nav-box lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-4 lg:py-3">備刀排程</button>
+            <button onclick="switchPage('analysis')" id="nav-analysis" class="nav-box lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-4 lg:py-3">數據分析</button>
         </nav>
     </aside>
 
-    <main class="flex-1 overflow-hidden p-4 lg:p-10">
+    <main class="flex-1 overflow-hidden p-4 lg:p-10 relative">
         <section id="page-monitor" class="page-content page-active h-full flex flex-col">
             <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-3">
-                <div>
+                <div class="z-10 relative">
                     <h2 class="header-title text-5xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2>
-                    <p class="text-blue-600 text-sm font-black tracking-widest mt-2 uppercase">各區鋼瓶高密度監控</p>
+                    <p class="text-blue-600 text-xs font-black tracking-widest mt-2 uppercase">全台鋼瓶存量即時看板</p>
                 </div>
-                <div class="flex gap-1 bg-slate-200/60 p-1 rounded-xl border border-slate-300">
+                <div class="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                     <button onclick="filterRegion('ALL')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-black bg-blue-600 text-white">全域</button>
                     <button onclick="filterRegion('北區')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-black text-slate-500">北區</button>
                     <button onclick="filterRegion('中區')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-black text-slate-500">中區</button>
                     <button onclick="filterRegion('南區')" class="reg-btn px-4 py-1.5 rounded-lg text-xs font-black text-slate-500">南區</button>
                 </div>
             </header>
-            <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto flex-1 pb-20 pr-1"></div>
+            <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto flex-1 custom-scrollbar pb-10"></div>
         </section>
 
         <section id="page-analysis" class="page-content h-full flex flex-col">
-            <header class="mb-6">
+            <header class="mb-6 z-10 relative">
                 <h2 class="header-title text-5xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Analytics</h2>
-                <p class="text-blue-600 text-sm font-black tracking-widest mt-2 uppercase">年度數據分析報告</p>
+                <p class="text-blue-600 text-xs font-black tracking-widest mt-2 uppercase">2026 勤務與壓力分析</p>
             </header>
             <div class="grid grid-cols-3 gap-3 mb-6">
                 <button onclick="updateAnalysisRegion('北區')" class="ana-reg-btn py-4 bg-slate-800 text-white rounded-2xl font-black italic border-2 border-blue-500">北區分析</button>
                 <button onclick="updateAnalysisRegion('中區')" class="ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-300">中區分析</button>
                 <button onclick="updateAnalysisRegion('南區')" class="ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-300">南區分析</button>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto pr-1">
-                <div class="bg-white p-6 rounded-[2rem] border border-slate-200">
-                    <h3 class="text-xl font-black text-slate-800 mb-4 italic border-b-2 border-slate-50 pb-2 uppercase">📋 勤務頻次</h3>
-                    <div id="ana-hospital-list" class="space-y-2"></div>
-                </div>
-                <div class="bg-white p-6 rounded-[2rem] border border-slate-200 flex flex-col justify-center min-h-[300px]">
-                    <h3 class="text-xl font-black text-slate-800 mb-8 italic text-center uppercase">📉 平均換氣壓力 (PSI)</h3>
-                    <div class="flex justify-around items-center">
-                        <div class="text-center">
-                            <p class="text-[11px] font-black text-blue-500 uppercase mb-2">Argon (Ar)</p>
-                            <p id="ana-ar-psi" class="text-6xl font-black text-slate-900 font-mono italic">--</p>
-                        </div>
-                        <div class="w-px h-16 bg-slate-200"></div>
-                        <div class="text-center">
-                            <p class="text-[11px] font-black text-purple-500 uppercase mb-2">Helium (He)</p>
-                            <p id="ana-he-psi" class="text-6xl font-black text-slate-900 font-mono italic">--</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm"><h3 class="text-xl font-black text-slate-800 mb-4 italic border-b-2 pb-2">📋 勤務統計</h3><div id="ana-hospital-list" class="space-y-2"></div></div>
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-200 flex flex-col justify-center min-h-[300px]"><h3 class="text-xl font-black text-slate-800 mb-8 italic text-center">📉 平均換氣壓力</h3><div class="flex justify-around items-center"><div class="text-center"><p class="text-xs font-bold text-blue-500 uppercase mb-2">Ar</p><p id="ana-ar-psi" class="text-6xl font-black text-slate-900 font-mono italic">--</p></div><div class="w-px h-16 bg-slate-200"></div><div class="text-center"><p class="text-xs font-bold text-purple-500 uppercase mb-2">He</p><p id="ana-he-psi" class="text-6xl font-black text-slate-900 font-mono italic">--</p></div></div></div>
             </div>
         </section>
 
         <section id="page-schedule" class="page-content h-full flex flex-col">
-            <header class="mb-6">
+            <header class="mb-6 z-10 relative">
                 <h2 class="header-title text-5xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Schedule</h2>
-                <p class="text-blue-600 text-sm font-black tracking-widest mt-2 uppercase">預定備刀勤務管理</p>
+                <p class="text-blue-600 text-xs font-black tracking-widest mt-2 uppercase">勤務任務管理</p>
             </header>
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
-                <div class="lg:col-span-4 h-fit">
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-200">
-                        <h3 id="formTitle" class="text-2xl font-black mb-4 text-blue-600 italic leading-none">Add Task</h3>
-                        <form id="surgeryForm" class="space-y-4">
-                            <input type="hidden" id="editId">
-                            <div><label class="text-xs font-black text-slate-400 block mb-1 uppercase tracking-widest">負責人</label><select id="userName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold"></select></div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label class="text-xs font-black text-slate-400 block mb-1 uppercase tracking-widest">日期</label><input type="date" id="surgeryDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold"></div>
-                                <div><label class="text-xs font-black text-slate-400 block mb-1 uppercase tracking-widest">星期</label><div id="weekdayDisplay" class="py-3 bg-blue-50 text-blue-600 font-black rounded-xl text-center">--</div></div>
-                            </div>
-                            <div><label class="text-xs font-black text-slate-400 block mb-1 uppercase tracking-widest">醫院</label><select id="hospitalName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold"></select></div>
-                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                                <div class="bg-blue-50/50 p-3 rounded-xl"><span class="text-[10px] font-black text-blue-500 uppercase">HE 氦氣</span><select id="heGas" class="gas-sel w-full bg-transparent border-none font-bold text-sm outline-none"></select></div>
-                                <div class="bg-slate-50/50 p-3 rounded-xl"><span class="text-[10px] font-black text-slate-500 uppercase">AR1 氬氣</span><select id="ar1Gas" class="gas-sel w-full bg-transparent border-none font-bold text-sm outline-none"></select></div>
-                            </div>
-                            <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 rounded-2xl font-black text-white text-sm tracking-widest uppercase italic shadow-md transition-all active:scale-95">Confirm Sync</button>
-                        </form>
-                    </div>
-                </div>
-                <div id="scheduleGrid" class="lg:col-span-8 overflow-y-auto pb-20 space-y-3"></div>
+                <div class="lg:col-span-4 h-fit"><div class="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm"><h3 id="formTitle" class="text-2xl font-black mb-4 text-blue-600 italic">Add Task</h3><form id="surgeryForm" class="space-y-4"><input type="hidden" id="editId"><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">負責人</label><select id="userName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold"></select></div><div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">日期</label><input type="date" id="surgeryDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold"></div><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">星期</label><div id="weekdayDisplay" class="py-3 bg-blue-50 text-blue-600 font-black rounded-xl text-center">--</div></div></div><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">醫院</label><select id="hospitalName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold"></select></div><div class="grid grid-cols-2 gap-2 pt-2 border-t"><div class="bg-blue-50/50 p-3 rounded-xl"><span class="text-[8px] font-black text-blue-500 uppercase">HE</span><select id="heGas" class="gas-sel w-full bg-transparent font-bold text-sm outline-none"></select></div><div class="bg-slate-50/50 p-3 rounded-xl"><span class="text-[8px] font-black text-slate-500 uppercase">AR1</span><select id="ar1Gas" class="gas-sel w-full bg-transparent font-bold text-sm outline-none"></select></div></div><button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 rounded-2xl font-black text-white text-xs tracking-widest uppercase shadow-md active:scale-95">Confirm</button></form></div></div>
+                <div id="scheduleGrid" class="lg:col-span-8 overflow-y-auto pb-20 space-y-3 custom-scrollbar"></div>
             </div>
         </section>
     </main>
@@ -160,37 +122,28 @@
         const USERS = ["杜孟擇", "張家榮"];
         const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
         
-        let latestMonitorData = []; 
-        let historicalRows = []; 
-        let localSchedules = []; 
-        let currentMonitorFilter = 'ALL';
+        let latestMonitorData = []; let historicalRows = []; let localSchedules = []; let currentMonitorFilter = 'ALL';
 
         function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
 
+        // 核心切換功能 (修復重疊與切換問題)
+        function switchPage(pageID) {
+            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active'));
+            document.getElementById('page-' + pageID).classList.add('page-active');
+            document.querySelectorAll('.nav-box').forEach(btn => btn.classList.remove('nav-box-active'));
+            document.getElementById('nav-' + pageID).classList.add('nav-box-active');
+            safeLucide();
+            window.scrollTo(0,0);
+        }
+
         window.onload = async () => { 
-            initForms();
+            initForms(); 
             await fetchMonitorData(); 
-            await loadSchedulesFromCloud();
+            await loadSchedulesFromCloud(); 
             await preLoadHistoricalData(); 
             updateAnalysisRegion('北區');
             safeLucide(); 
         };
-
-        // --- 核心功能切換頁面 (徹底修復版) ---
-        function switchPage(pageID) {
-            // 1. 隱藏所有頁面
-            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active'));
-            // 2. 顯示目標頁面
-            document.getElementById('page-' + pageID).classList.add('page-active');
-            
-            // 3. 切換導覽列按鈕樣式
-            document.querySelectorAll('.nav-box').forEach(btn => btn.classList.remove('nav-box-active'));
-            const targetBtnID = 'nav-' + pageID;
-            document.getElementById(targetBtnID).classList.add('nav-box-active');
-            
-            safeLucide();
-            window.scrollTo(0, 0); // 回到頂部避免視覺誤差
-        }
 
         async function fetchMonitorData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:L2000?key=${API_KEY}`;
@@ -211,11 +164,7 @@
 
         async function preLoadHistoricalData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:H3000?key=${API_KEY}`;
-            try {
-                const response = await fetch(url);
-                const result = await response.json();
-                historicalRows = result.values || [];
-            } catch (e) { console.error(e); }
+            try { const res = await fetch(url); const data = await res.json(); historicalRows = data.values || []; } catch (e) { console.error(e); }
         }
 
         function renderMonitorCards() {
@@ -230,35 +179,25 @@
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <h3 class="text-4xl font-black text-slate-900 italic leading-none">${item.gas}</h3>
-                            <p class="text-[14px] font-black text-blue-800 uppercase leading-none mt-2 tracking-tighter">${item.region} · ${item.location}</p>
+                            <p class="text-[13px] font-black text-blue-800 uppercase leading-none mt-2 tracking-tighter">${item.region} · ${item.location}</p>
                         </div>
                         <div class="text-right bg-white/60 p-3 rounded-2xl border border-white/80">
-                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none">用途</p>
-                            <p class="text-blue-900 font-black text-2xl italic leading-none mb-2">${item.reason}</p>
-                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none">備刀日期</p>
+                            <p class="text-[10px] text-slate-500 font-black uppercase leading-none">用途</p>
+                            <p class="text-blue-950 font-black text-2xl italic leading-none mb-1">${item.reason}</p>
+                            <p class="text-[10px] text-slate-500 font-black uppercase leading-none">備刀日期</p>
                             <p class="text-slate-900 font-black text-base italic leading-none">${item.standbyDate || '無'}</p>
                         </div>
                     </div>
-                    
                     <div class="mt-4">
                         <div class="flex items-baseline gap-1 leading-none mb-2">
                             <span class="text-6xl font-mono font-black text-slate-950 italic tracking-tighter">${item.pressure.toLocaleString()}</span>
-                            <span class="text-lg font-black text-slate-400 italic font-sans">PSI</span>
+                            <span class="text-lg font-black text-slate-400 italic">PSI</span>
                         </div>
-                        <div class="w-full h-3.5 bg-white/60 rounded-full overflow-hidden border border-white/40">
-                            <div class="h-full ${(item.pressure < 3000) ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${pct}%"></div>
-                        </div>
+                        <div class="w-full h-3.5 bg-white/60 rounded-full overflow-hidden border border-white/40"><div class="h-full ${(item.pressure < 3000) ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${pct}%"></div></div>
                     </div>
-
                     <div class="flex justify-between items-end pt-4 border-t border-slate-900/10">
-                        <div>
-                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none mb-1">負責人</p>
-                            <p class="text-slate-900 font-black text-xl leading-none">${item.user}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[11px] text-slate-500 font-black uppercase leading-none mb-1">填入時間</p>
-                            <p class="text-slate-700 font-mono font-black text-[10px] leading-none tracking-tighter">${item.time}</p>
-                        </div>
+                        <div><p class="text-[10px] text-slate-400 font-black uppercase mb-1">負責人</p><p class="text-slate-900 font-black text-xl leading-none">${item.user}</p></div>
+                        <div class="text-right"><p class="text-[10px] text-slate-400 font-black uppercase mb-1 leading-none">填入時間</p><p class="text-slate-700 font-mono font-black text-[10px] leading-none tracking-tighter">${item.time}</p></div>
                     </div>
                 </div>`;
             }).join('');
@@ -266,124 +205,27 @@
         }
 
         function showMonitorDetail(gasName) {
-            const item = latestMonitorData.find(d => d.gas === gasName);
-            if (!item) return;
+            const item = latestMonitorData.find(d => d.gas === gasName); if (!item) return;
             const history = historicalRows.filter(r => r[2] === gasName).slice(-5).reverse();
             let historyHtml = history.map(h => {
                 const hP = parseInt(h[7]) || 0;
                 return `
                 <div class="flex justify-between items-center py-3 border-b border-slate-100 last:border-0">
-                    <div class="text-xs">
-                        <p class="font-black text-slate-900 text-sm mb-1 uppercase">${h[6]} @ ${h[5]}</p>
-                        <div class="flex gap-2 text-[10px] text-slate-500 font-bold italic">
-                           <span>USER: ${h[1]}</span>
-                           <span>| ${h[0]}</span>
-                        </div>
-                    </div>
+                    <div class="text-xs leading-tight"><p class="font-black text-slate-900 text-sm mb-1 uppercase">${h[6]} @ ${h[5]}</p><div class="flex gap-2 text-[10px] text-slate-500 font-bold italic"><span>USER: ${h[1]}</span><span>| ${h[0]}</span></div></div>
                     <div class="text-xl font-mono font-black ${hP < 3000 ? 'text-red-500' : 'text-blue-600'} italic leading-none">${hP.toLocaleString()}</div>
                 </div>`;
             }).join('');
-
-            document.getElementById('monitor-modal-content').innerHTML = `
-                <div class="flex flex-col md:flex-row gap-8">
-                    <div class="md:w-[30%] border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-8">
-                        <h2 class="text-6xl font-black text-slate-950 italic leading-none mb-6">${item.gas}</h2>
-                        <div class="space-y-6">
-                            <div class="bg-blue-50/80 p-5 rounded-3xl border border-blue-100">
-                                <p class="text-[11px] text-slate-500 font-black uppercase mb-1">現有存量</p>
-                                <p class="text-6xl font-black text-slate-950 font-mono italic leading-none">${item.pressure.toLocaleString()}</p>
-                            </div>
-                            <div class="px-2">
-                                <p class="text-[11px] text-slate-500 font-black uppercase mb-1 tracking-widest leading-none">用途說明</p>
-                                <p class="text-blue-800 font-black text-2xl italic leading-none mt-1">${item.reason}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest italic flex items-center gap-2">📜 最近 5 筆歷史軌跡</h3>
-                        <div class="space-y-1">${historyHtml || '<p class="text-xs text-slate-300">目前尚無數據</p>'}</div>
-                    </div>
-                </div>
-                <button onclick="closeMonitorModal()" class="w-full mt-8 py-5 bg-slate-950 text-white rounded-2xl font-black text-base tracking-[0.4em] uppercase shadow-lg transition-transform active:scale-95">CLOSE</button>
-            `;
+            document.getElementById('monitor-modal-content').innerHTML = `<div class="flex flex-col md:flex-row gap-8"><div class="md:w-[35%] border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-8"><h2 class="text-6xl font-black text-slate-950 italic leading-none mb-6">${item.gas}</h2><div class="space-y-6"><div class="bg-blue-50/80 p-5 rounded-3xl border border-blue-100"><p class="text-[11px] text-slate-500 font-black uppercase mb-1">現有存量</p><p class="text-6xl font-black text-slate-950 font-mono italic leading-none">${item.pressure.toLocaleString()}</p></div><div class="px-2"><p class="text-[11px] text-slate-500 font-black uppercase mb-1 tracking-widest leading-none">用途說明</p><p class="text-blue-800 font-black text-2xl italic leading-none mt-1">${item.reason}</p></div></div></div><div class="flex-1"><h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest italic flex items-center gap-2">📜 最近 5 筆歷史軌跡</h3><div class="space-y-1">${historyHtml || '<p class="text-xs text-slate-300">目前尚無數據</p>'}</div></div></div><button onclick="closeMonitorModal()" class="w-full mt-8 py-5 bg-slate-950 text-white rounded-2xl font-black text-base tracking-[0.4em] uppercase shadow-lg active:scale-95 transition-transform">CLOSE</button>`;
             document.getElementById('monitor-modal').classList.remove('hidden'); safeLucide();
         }
 
-        // --- 排程與分析 ---
-        function filterRegion(r) { 
-            currentMonitorFilter = r; 
-            document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r) || (r==='ALL' && b.innerText==='全域')));
-            document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.classList.contains('bg-blue-600')));
-            renderMonitorCards(); 
-        }
-
-        function updateAnalysisRegion(region) {
-            document.querySelectorAll('.ana-reg-btn').forEach(btn => {
-                if(btn.innerText.includes(region)) {
-                    btn.className = "ana-reg-btn py-4 bg-slate-800 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md";
-                } else {
-                    btn.className = "ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-300 shadow-sm";
-                }
-            });
-            const hospitalCount = {};
-            let arTotal = 0, arCount = 0, heTotal = 0, heCount = 0;
-            historicalRows.forEach(row => {
-                const time = row[0] || "", gasID = row[2] || "", reg = row[3] || "", hospital = row[5] || "", reason = row[6] || "", psi = parseInt(row[7]) || 0;
-                if (reg === region) {
-                    if (time.includes("2026") && hospital) hospitalCount[hospital] = (hospitalCount[hospital] || 0) + 1;
-                    if (reason === "待灌氣") {
-                        if (gasID.toLowerCase().startsWith("ar")) { arTotal += psi; arCount++; }
-                        else if (gasID.toLowerCase().startsWith("he")) { heTotal += psi; heCount++; }
-                    }
-                }
-            });
-            const listArea = document.getElementById('ana-hospital-list');
-            const sorted = Object.entries(hospitalCount).sort((a,b) => b[1] - a[1]);
-            listArea.innerHTML = sorted.length > 0 ? sorted.map(([name, count]) => `
-                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm"><span class="font-black text-slate-700">${name}</span><span class="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black italic">${count} VISITS</span></div>
-            `).join('') : '<p class="text-slate-400 text-center py-10">尚無 2026 年度紀錄</p>';
-            document.getElementById('ana-ar-psi').innerText = arCount > 0 ? Math.round(arTotal/arCount) : "--";
-            document.getElementById('ana-he-psi').innerText = heCount > 0 ? Math.round(heTotal/heCount) : "--";
-        }
-
-        async function loadSchedulesFromCloud() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
-            try { const res = await fetch(url); const data = await res.json(); if (data.values) { localSchedules = data.values.map(r => ({ id: parseInt(r[0]), date: r[1], weekday: r[2], hospital: r[3], user: r[4], cases: r[5], he: r[6], ar1: r[7], ar2: r[8], status: r[9] })); renderScheduleList(); } } catch (e) { console.error(e); }
-        }
-
-        function renderScheduleList() {
-            const grid = document.getElementById('scheduleGrid'); const now = new Date(); now.setHours(0,0,0,0);
-            const sorted = [...localSchedules].sort((a, b) => new Date(a.date) - new Date(b.date));
-            const alerts = sorted.filter(s => new Date(s.date) < now && s.status === 'pending');
-            const active = sorted.filter(s => new Date(s.date) >= now && s.status === 'pending');
-            let html = '';
-            if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-[11px] font-black text-amber-600 uppercase mb-2 tracking-widest">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'border-l-4 border-amber-500')).join('') + `</div>`;
-            html += `<div class="mb-4"><h4 class="text-[11px] font-black text-slate-400 uppercase mb-2 tracking-widest">📅 預定備刀</h4>` + (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<p class="text-sm text-slate-300 italic text-center py-10">目前無任務</p>`) + `</div>`;
-            grid.innerHTML = html; safeLucide();
-        }
-
-        function getItemHtml(item, customClass = '') {
-            return `<div class="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm ${customClass} mb-3">
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-black text-blue-500 uppercase italic mb-1">${item.weekday} ${item.date.slice(5)}</span>
-                    <span class="text-xl font-black text-slate-900">${item.hospital}</span>
-                    <span class="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">負責人: ${item.user}</span>
-                </div>
-                <div class="flex gap-2">
-                    <div class="bg-blue-50 px-4 py-2 rounded-xl text-center"><p class="text-[8px] font-black text-blue-500 leading-none mb-1">HE</p><p class="text-lg font-black text-slate-800 leading-none">${item.he}</p></div>
-                    <div class="bg-slate-50 px-4 py-2 rounded-xl text-center"><p class="text-[8px] font-black text-slate-500 leading-none mb-1">AR1</p><p class="text-lg font-black text-slate-800 leading-none">${item.ar1}</p></div>
-                </div>
-            </div>`;
-        }
-
-        function initForms() {
-            const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName'); const gSels = document.querySelectorAll('.gas-sel');
-            USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
-            for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
-            document.getElementById('surgeryDate').addEventListener('input', (e) => { const days = ['週日','週一','週二','週三','週四','週五','週六']; document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--'; });
-        }
-
+        function filterRegion(r) { currentMonitorFilter = r; document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r) || (r==='ALL' && b.innerText==='全域'))); document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.classList.contains('bg-blue-600'))); renderMonitorCards(); }
         function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
+        async function loadSchedulesFromCloud() { const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`; try { const res = await fetch(url); const data = await res.json(); if (data.values) { localSchedules = data.values.map(r => ({ id: parseInt(r[0]), date: r[1], weekday: r[2], hospital: r[3], user: r[4], cases: r[5], he: r[6], ar1: r[7], ar2: r[8], status: r[9] })); renderScheduleList(); } } catch (e) { console.error(e); } }
+        function renderScheduleList() { const grid = document.getElementById('scheduleGrid'); const now = new Date(); now.setHours(0,0,0,0); const sorted = [...localSchedules].sort((a, b) => new Date(a.date) - new Date(b.date)); const alerts = sorted.filter(s => new Date(s.date) < now && s.status === 'pending'); const active = sorted.filter(s => new Date(s.date) >= now && s.status === 'pending'); let html = ''; if(alerts.length > 0) html += `<div class="mb-4"><h4 class="text-[10px] font-black text-amber-600 uppercase mb-2 tracking-widest">⚠️ 逾期未處理</h4>` + alerts.map(i => getItemHtml(i, 'border-l-4 border-amber-500')).join('') + `</div>`; html += `<div class="mb-4"><h4 class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">📅 預定備刀</h4>` + (active.length > 0 ? active.map(i => getItemHtml(i)).join('') : `<p class="text-sm text-slate-300 italic text-center py-10">目前無任務</p>`) + `</div>`; grid.innerHTML = html; safeLucide(); }
+        function getItemHtml(item, customClass = '') { return `<div class="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm ${customClass} mb-3"><div class="flex flex-col"><span class="text-[10px] font-black text-blue-500 uppercase italic mb-1">${item.weekday} ${item.date.slice(5)}</span><span class="text-xl font-black text-slate-900">${item.hospital}</span><span class="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">負責人: ${item.user}</span></div><div class="flex gap-2"><div class="bg-blue-50 px-4 py-2 rounded-xl text-center"><p class="text-[8px] font-black text-blue-500 leading-none mb-1">HE</p><p class="text-lg font-black text-slate-800 leading-none">${item.he}</p></div><div class="bg-slate-50 px-4 py-2 rounded-xl text-center"><p class="text-[8px] font-black text-slate-500 leading-none mb-1">AR1</p><p class="text-lg font-black text-slate-800 leading-none">${item.ar1}</p></div></div></div>`; }
+        function updateAnalysisRegion(region) { document.querySelectorAll('.ana-reg-btn').forEach(btn => { if(btn.innerText.includes(region)) { btn.className = "ana-reg-btn py-4 bg-slate-800 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md"; } else { btn.className = "ana-reg-btn py-4 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-300 shadow-sm"; } }); const hospitalCount = {}; let arTotal = 0, arCount = 0, heTotal = 0, heCount = 0; historicalRows.forEach(row => { const time = row[0] || "", gasID = row[2] || "", reg = row[3] || "", hospital = row[5] || "", reason = row[6] || "", psi = parseInt(row[7]) || 0; if (reg === region) { if (time.includes("2026") && hospital) hospitalCount[hospital] = (hospitalCount[hospital] || 0) + 1; if (reason === "待灌氣") { if (gasID.toLowerCase().startsWith("ar")) { arTotal += psi; arCount++; } else if (gasID.toLowerCase().startsWith("he")) { heTotal += psi; heCount++; } } } }); const listArea = document.getElementById('ana-hospital-list'); const sorted = Object.entries(hospitalCount).sort((a,b) => b[1] - a[1]); listArea.innerHTML = sorted.length > 0 ? sorted.map(([name, count]) => ` <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm"><span class="font-black text-slate-700">${name}</span><span class="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black italic">${count} VISITS</span></div> `).join('') : '<p class="text-slate-400 text-center py-10">尚無紀錄</p>'; document.getElementById('ana-ar-psi').innerText = arCount > 0 ? Math.round(arTotal/arCount) : "--"; document.getElementById('ana-he-psi').innerText = heCount > 0 ? Math.round(heTotal/heCount) : "--"; }
+        function initForms() { const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName'); const gSels = document.querySelectorAll('.gas-sel'); USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h))); for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v))); document.getElementById('surgeryDate').addEventListener('input', (e) => { const days = ['週日','週一','週二','週三','週四','週五','週六']; document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--'; }); }
     </script>
 </body>
 </html>
