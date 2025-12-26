@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GAS 戰情中心 v6.2.5</title>
+    <title>GAS 戰情中心 v6.2.6</title>
     <link rel="icon" href="data:,"> 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
@@ -12,11 +12,9 @@
         :root { --bg-light: #f8fafc; }
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; margin: 0; padding: 0; }
         
-        /* 🎨 卡片模式：玻璃美學 */
         .glass-card-ar { background: rgba(224, 242, 254, 0.95); backdrop-filter: blur(12px); border: 2px solid #bae6fd; }
         .glass-card-he { background: rgba(245, 243, 255, 0.95); backdrop-filter: blur(12px); border: 2px solid #ddd6fe; }
         
-        /* 📱 手機導覽導航按鈕 */
         @media (max-width: 1023px) {
             .mobile-grid-nav { display: flex !important; position: sticky; top: 0; z-index: 100; padding: 10px; gap: 8px; background: white; border-bottom: 1px solid #e2e8f0; }
             .nav-box { flex: 1 !important; text-align: center; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 0; font-size: 14px; font-weight: 900; color: #64748b; background: #f1f5f9; }
@@ -27,7 +25,6 @@
         .page-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 🟢 清單模式 (ListView) 專屬樣式 */
         #monitor-list-view { display: none; width: 100%; background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; overflow: hidden; }
         .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
         .list-table th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 900; color: #64748b; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
@@ -41,12 +38,41 @@
         .psi-vhigh { color: #059669; }
         @keyframes blink { 50% { opacity: 0.5; } }
 
-        /* 側拉窗與捲軸 */
         #schedule-drawer { transition: transform 0.3s ease-in-out; }
         .drawer-open { transform: translateX(0) !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        
+
+        /* 📅 日期選取器精準優化 */
+        .date-container { 
+            position: relative; 
+            overflow: hidden; /* 🟢 關鍵：確保任何子元素（包含隱形日曆）都不會超出這個容器 */
+            border-radius: 0.75rem; /* 跟隨你的圓角設定 */
+        }
+
+        input[type="date"] {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 🟢 讓隱形的日曆圖示完整覆蓋「年/月/日」文字，但不准超出框框 */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            opacity: 0; /* 保持隱形 */
+            z-index: 20; /* 確保它在文字最上層，這樣點文字就會點到它 */
+        }
+       
     </style>
 </head>
 <body class="flex flex-col lg:flex-row overflow-x-hidden">
@@ -54,7 +80,7 @@
     <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-[100] shadow-sm lg:h-screen lg:sticky lg:top-0">
         <div class="p-6 text-center lg:text-left hidden lg:block">
             <h1 class="text-2xl font-black italic tracking-tighter text-slate-950 uppercase leading-none">Gas Command</h1>
-            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.2.5 Perfect Sync</p>
+            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.2.6 Final Polish</p>
         </div>
         <nav class="mobile-grid-nav lg:flex-col lg:p-6 lg:space-y-3">
             <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-box nav-box-active lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-5 lg:py-4 lg:rounded-xl lg:text-base">即時監控</button>
@@ -69,8 +95,12 @@
                 <div><h2 class="text-5xl lg:text-7xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2></div>
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 mr-1 shadow-inner">
-                        <button id="viewBtn-card" onclick="toggleView('card')" class="p-2 rounded-lg bg-white shadow-sm text-blue-600 transition-all"><i data-lucide="layout-grid" class="w-4 h-4"></i></button>
-                        <button id="viewBtn-list" onclick="toggleView('list')" class="p-2 rounded-lg text-slate-400 hover:text-blue-600 transition-all"><i data-lucide="list" class="w-4 h-4"></i></button>
+                        <button id="viewBtn-card" onclick="toggleView('card')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm text-blue-600 transition-all">
+                            <i data-lucide="layout-grid" class="w-5 h-5 pointer-events-none"></i>
+                        </button>
+                        <button id="viewBtn-list" onclick="toggleView('list')" class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 transition-all">
+                            <i data-lucide="list" class="w-5 h-5 pointer-events-none"></i>
+                        </button>
                     </div>
                     <button id="sortToggleBtn" onclick="toggleSortMode()" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[11px] uppercase hover:bg-slate-50 transition-all">
                         <i data-lucide="arrow-down-narrow-wide" class="w-4 h-4"></i> 壓力優先 OFF
@@ -100,7 +130,7 @@
         <section id="page-analysis" class="page-content flex-col">
             <header class="mb-10"><h2 class="text-5xl lg:text-7xl font-black italic text-slate-900 uppercase tracking-tighter">Analytics</h2></header>
             <div class="grid grid-cols-3 gap-3 mb-8">
-                <button onclick="updateAnalysisRegion('北區')" class="ana-reg-btn py-5 bg-slate-900 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md">北區分析</button>
+                <button onclick="updateAnalysisRegion('北區')" class="ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md">北區分析</button>
                 <button onclick="updateAnalysisRegion('中區')" class="ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200">中區分析</button>
                 <button onclick="updateAnalysisRegion('南區')" class="ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200">南區分析</button>
             </div>
@@ -199,11 +229,10 @@
 
     window.onload = async () => { 
         initForms(); await fetchMonitorData(); await loadSchedulesFromCloud(); await preLoadHistoricalData(); 
-        filterRegion(currentMonitorFilter); toggleView(currentView); // 自動套用上次記憶
+        filterRegion(currentMonitorFilter); toggleView(currentView);
         updateAnalysisRegion('北區'); safeLucide(); 
     };
 
-    // --- 📊 數據處理 ---
     async function fetchMonitorData() {
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:L2000?key=${API_KEY}`;
         try {
@@ -241,7 +270,6 @@
         return data;
     }
 
-    // 模式：卡片渲染
     function renderMonitorCards() {
         const grid = document.getElementById('monitor-grid');
         let data = getFilteredAndSortedData();
@@ -266,7 +294,6 @@
         safeLucide();
     }
 
-    // 模式：清單渲染 (Excel Style)
     function renderListView() {
         const tbody = document.getElementById('list-body');
         let data = getFilteredAndSortedData();
@@ -283,13 +310,12 @@
         }).join('');
     }
 
-    // --- 🟢 控制邏輯 ---
     function toggleView(mode) {
         currentView = mode; localStorage.setItem('gas_last_view', mode);
         document.getElementById('monitor-grid').style.display = mode === 'card' ? 'grid' : 'none';
         document.getElementById('monitor-list-view').style.display = mode === 'list' ? 'block' : 'none';
-        document.getElementById('viewBtn-card').className = mode === 'card' ? 'p-2 rounded-lg bg-white shadow-sm text-blue-600' : 'p-2 rounded-lg text-slate-400';
-        document.getElementById('viewBtn-list').className = mode === 'list' ? 'p-2 rounded-lg bg-white shadow-sm text-blue-600' : 'p-2 rounded-lg text-slate-400';
+        document.getElementById('viewBtn-card').className = mode === 'card' ? 'w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm text-blue-600' : 'w-10 h-10 flex items-center justify-center rounded-lg text-slate-400';
+        document.getElementById('viewBtn-list').className = mode === 'list' ? 'w-10 h-10 flex items-center justify-center rounded-lg bg-white shadow-sm text-blue-600' : 'w-10 h-10 flex items-center justify-center rounded-lg text-slate-400';
         renderMonitorMain();
     }
 
@@ -352,7 +378,6 @@
         document.getElementById('monitor-modal').classList.remove('hidden'); safeLucide();
     }
 
-    // --- 📋 排程編輯與 CRUD ---
     function editTask(id) {
         const item = localSchedules.find(s => s.id.toString() === id.toString()); if (!item) return;
         document.getElementById('editId').value = item.id; document.getElementById('userName').value = item.user; document.getElementById('surgeryDate').value = item.date;
@@ -398,11 +423,21 @@
         </div>`;
     }
 
-    // --- 📊 分析 ---
+    // 🟢 數據分析核心邏輯優化：只計算「待灌氣」數據
     function updateAnalysisRegion(region) {
         document.querySelectorAll('.ana-reg-btn').forEach(btn => btn.className = btn.innerText.includes(region) ? "ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md" : "ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200");
         const counts = {}; let aT=0, aC=0, hT=0, hC=0;
-        historicalRows.forEach(row => { if (row[3] === region) { if (row[0].includes("2026") && row[5]) counts[row[5]] = (counts[row[5]] || 0) + 1; if (row[6] === "待灌氣" || row[6] === "下刀") { const p = parseInt(row[7]) || 0; if (row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } else { hT += p; hC++; } } } });
+        historicalRows.forEach(row => { 
+            if (row[3] === region) { 
+                if (row[0].includes("2026") && row[5]) counts[row[5]] = (counts[row[5]] || 0) + 1; 
+                // 🟡 關鍵修正：移除 "下刀"，只抓取 "待灌氣"
+                if (row[6] === "待灌氣") { 
+                    const p = parseInt(row[7]) || 0; 
+                    if (row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } 
+                    else { hT += p; hC++; } 
+                } 
+            } 
+        });
         const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
         document.getElementById('ana-hospital-list').innerHTML = sorted.length > 0 ? sorted.map(([n, c]) => `<div class="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-200"><span class="font-black text-slate-800 text-lg">${n}</span><span class="bg-blue-600 text-white px-5 py-1.5 rounded-full text-xs font-black italic">${c} VISITS</span></div>`).join('') : '<p class="text-slate-400 text-center py-16 italic">無數據</p>';
         document.getElementById('ana-ar-psi').innerText = aC > 0 ? Math.round(aT/aC) : "--"; document.getElementById('ana-he-psi').innerText = hC > 0 ? Math.round(hT/hC) : "--";
