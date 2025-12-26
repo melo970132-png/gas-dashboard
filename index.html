@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GAS 戰情中心 v6.0.0</title>
+    <title>GAS 戰情中心 v6.0.1</title>
     <link rel="icon" href="data:,"> 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
@@ -42,7 +42,7 @@
     <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-[100] shadow-sm lg:h-screen lg:sticky lg:top-0">
         <div class="p-6 text-center lg:text-left hidden lg:block">
             <h1 class="text-2xl font-black italic tracking-tighter text-slate-950 uppercase leading-none">Gas Command</h1>
-            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.0.0 Grand Finale</p>
+            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.0.1 Polish Edition</p>
         </div>
         <nav class="mobile-grid-nav lg:flex-col lg:p-6 lg:space-y-3">
             <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-box nav-box-active lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-5 lg:py-4 lg:rounded-xl lg:text-base">即時監控</button>
@@ -136,8 +136,8 @@
     </main>
 
     <div id="monitor-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md">
-        <div class="bg-white/95 backdrop-blur-2xl w-full max-w-5xl rounded-[3rem] p-6 lg:p-12 relative shadow-2xl border border-white/50">
-            <button onclick="closeMonitorModal()" class="absolute top-6 right-6 text-slate-400 hover:text-red-500 transition-all"><i data-lucide="x" class="w-10 h-10"></i></button>
+        <div class="bg-white/95 backdrop-blur-2xl w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl p-6 lg:p-12 relative shadow-2xl border border-white/50 custom-scrollbar">
+            <button onclick="closeMonitorModal()" class="absolute top-6 right-6 text-slate-400 hover:text-red-500 transition-all"><i data-lucide="x" class="w-8 h-8"></i></button>
             <div id="monitor-modal-content"></div>
         </div>
     </div>
@@ -170,7 +170,6 @@
             updateAnalysisRegion('北區'); safeLucide(); 
         };
 
-        // --- 📊 數據讀取與排序核心 ---
         async function fetchMonitorData() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:L2000?key=${API_KEY}`;
             try {
@@ -180,12 +179,11 @@
                     data.values.forEach(row => {
                         if (row[2]) map.set(row[2], { gas: row[2], region: row[3], standbyDate: row[4], location: row[5], reason: row[6], pressure: parseInt(row[7]) || 0, user: row[1], time: row[0] });
                     });
-                    // 🚀 精準排序邏輯：Ar1~16 -> He1~7
                     latestMonitorData = Array.from(map.values()).sort((a, b) => {
                         const getPrio = s => {
                             const m = s.match(/([a-zA-Z]+)(\d+)/);
                             if(!m) return [s, 0];
-                            const prefix = m[1].toLowerCase() === 'ar' ? 1 : 2; // Ar 為 1, He 為 2
+                            const prefix = m[1].toLowerCase() === 'ar' ? 1 : 2;
                             return [prefix, parseInt(m[2])];
                         };
                         const [pA, nA] = getPrio(a.gas); const [pB, nB] = getPrio(b.gas);
@@ -213,7 +211,7 @@
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
                             <h3 class="text-4xl font-black text-slate-900 italic leading-none">${item.gas}</h3>
-                            <p class="text-[14px] font-black text-blue-800 uppercase leading-none mt-2 tracking-tighter">${item.region}</p>
+                            <p class="text-lg font-black text-blue-800 uppercase leading-none mt-2 tracking-tighter">${item.region}</p>
                         </div>
                         <div class="text-right bg-white/70 p-3 rounded-2xl border border-white/80">
                             <p class="text-[10px] text-slate-500 font-black uppercase mb-1 leading-none tracking-widest">使用原因</p>
@@ -228,7 +226,7 @@
                             <span class="text-lg font-black text-slate-400 italic">PSI</span>
                         </div>
                         <div class="w-full h-3.5 bg-white/60 rounded-full overflow-hidden border border-white/40"><div class="h-full ${(item.pressure < 3000) ? 'bg-red-500 shadow-md' : 'bg-blue-600'}" style="width: ${pct}%"></div></div>
-                        <p class="text-[12px] font-bold text-slate-500 mt-2 uppercase tracking-widest">📍 ${item.location || '未知區域'}</p>
+                        <p class="text-[15px] font-bold text-slate-600 mt-2 uppercase tracking-widest">📍 ${item.location || '未知區域'}</p>
                     </div>
                     <div class="flex justify-between items-end pt-3 border-t border-slate-900/10">
                         <div><p class="text-[11px] text-slate-500 font-black uppercase mb-1 leading-none">負責人</p><p class="text-slate-900 font-black text-xl leading-none tracking-tight">${item.user}</p></div>
@@ -239,7 +237,6 @@
             safeLucide();
         }
 
-        // --- 🔴 分區小卡重鑄 (30/70) ---
         function showMonitorDetail(gasName) {
             const item = latestMonitorData.find(d => d.gas === gasName); if (!item) return;
             const history = historicalRows.filter(r => r[2] === gasName).slice(-5).reverse();
@@ -258,15 +255,16 @@
                 </div>`;
             }).join('');
 
+            // 🟡 小卡內容優化：手機版標題適度縮小
             document.getElementById('monitor-modal-content').innerHTML = `
                 <div class="flex flex-col md:flex-row gap-10">
                     <div class="md:w-[30%] border-b md:border-b-0 md:border-r border-slate-100 pb-8 md:pb-0 md:pr-10">
-                        <h2 class="text-7xl font-black text-slate-950 italic leading-none mb-8 uppercase tracking-tighter">${item.gas}</h2>
+                        <h2 class="text-5xl lg:text-7xl font-black text-slate-950 italic leading-none mb-8 uppercase tracking-tighter">${item.gas}</h2>
                         <div class="space-y-8">
                             <div class="bg-blue-50/80 p-6 rounded-[2.5rem] border border-blue-100 shadow-inner">
                                 <p class="text-xs text-slate-500 font-black uppercase mb-2 tracking-widest leading-none">當前主壓力</p>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-7xl font-black text-slate-950 font-mono italic leading-none">${item.pressure.toLocaleString()}</span>
+                                    <span class="text-6xl lg:text-7xl font-black text-slate-950 font-mono italic leading-none">${item.pressure.toLocaleString()}</span>
                                     <span class="text-base font-bold text-slate-400 italic">PSI</span>
                                 </div>
                             </div>
@@ -281,12 +279,11 @@
                         <div class="space-y-1">${historyHtml || '<p class="text-sm text-slate-300">尚無異動數據</p>'}</div>
                     </div>
                 </div>
-                <button onclick="closeMonitorModal()" class="w-full mt-10 py-6 bg-slate-950 text-white rounded-[2rem] font-black text-lg tracking-[0.5em] uppercase shadow-xl transition-all active:scale-95">CLOSE DASHBOARD</button>
+                <button onclick="closeMonitorModal()" class="w-full mt-10 py-5 bg-slate-950 text-white rounded-2xl font-black text-lg tracking-[0.5em] uppercase shadow-xl transition-all active:scale-95">CLOSE DASHBOARD</button>
             `;
             document.getElementById('monitor-modal').classList.remove('hidden'); safeLucide();
         }
 
-        // --- 📋 排程功能進化 ---
         async function loadSchedulesFromCloud() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
             try {
@@ -304,18 +301,15 @@
             const alertGrid = document.getElementById('alertGrid');
             const historyList = document.getElementById('historyList');
 
-            // 1. 逾期警示邏輯
             const alerts = localSchedules.filter(s => new Date(s.date) < now && s.status === 'pending');
             if (alerts.length > 0) {
                 document.getElementById('alertSection').classList.remove('hidden');
                 alertGrid.innerHTML = alerts.map(i => getItemHtml(i, 'border-l-8 border-amber-500 shadow-amber-50')).join('');
             } else { document.getElementById('alertSection').classList.add('hidden'); }
 
-            // 2. 預定排程 (按日期排序)
             const pending = localSchedules.filter(s => new Date(s.date) >= now && s.status === 'pending').sort((a,b) => new Date(a.date) - new Date(b.date));
             grid.innerHTML = pending.map(i => getItemHtml(i, 'hover:border-blue-400 cursor-pointer')).join('') || '<p class="text-base text-slate-300 italic py-16 text-center">目前無待辦任務</p>';
 
-            // 3. 7 天歷史紀錄 (帶氣體量與刪除線，按日期降序)
             const history = localSchedules.filter(s => s.status !== 'pending').sort((a,b) => new Date(b.date) - new Date(a.date));
             historyList.innerHTML = history.map(item => `
                 <div class="flex justify-between items-center bg-white/70 p-5 rounded-2xl border border-slate-100 opacity-60 grayscale-[0.3]">
@@ -337,7 +331,7 @@
             return `<div onclick="editTask('${item.id}')" class="bg-white p-6 rounded-[2.5rem] border border-slate-100 flex justify-between items-center shadow-sm transition-all ${customClass}">
                 <div class="flex flex-col">
                     <span class="text-sm font-black text-blue-600 uppercase italic mb-1 tracking-wider leading-none">${item.weekday} ${item.date}</span>
-                    <span class="text-3xl font-black text-slate-900 leading-tight tracking-tight uppercase">${item.hospital}</span>
+                    <span class="text-xl lg:text-2xl font-black text-slate-900 leading-tight tracking-tight uppercase">${item.hospital}</span>
                     <span class="text-[13px] text-slate-400 font-bold uppercase mt-1">負責人: ${item.user}</span>
                 </div>
                 <div class="flex gap-3">
@@ -347,7 +341,6 @@
             </div>`;
         }
 
-        // --- 排程編輯按鈕動作 ---
         function editTask(id) {
             const item = localSchedules.find(s => s.id.toString() === id.toString()); if (!item) return;
             document.getElementById('editId').value = item.id; document.getElementById('userName').value = item.user; document.getElementById('surgeryDate').value = item.date; document.getElementById('hospitalName').value = item.hospital;
@@ -366,7 +359,6 @@
         function filterRegion(r) { currentMonitorFilter = r; document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r))); renderMonitorCards(); }
         async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出！"); return true; } catch (e) { return false; } }
 
-        // --- 📊 數據分析邏輯 ---
         function updateAnalysisRegion(region) {
             document.querySelectorAll('.ana-reg-btn').forEach(btn => btn.className = btn.innerText.includes(region) ? "ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md" : "ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200");
             const hC = {}; let aT=0, aC=0, hT=0, hC_v=0;
