@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GAS 戰情中心 v6.0.1</title>
+    <title>GAS 戰情中心 v6.0.2</title>
     <link rel="icon" href="data:,"> 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
@@ -32,7 +32,6 @@
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
         
-        /* 📅 日期選取優化 */
         input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
         .date-container { position: relative; }
     </style>
@@ -42,7 +41,7 @@
     <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-[100] shadow-sm lg:h-screen lg:sticky lg:top-0">
         <div class="p-6 text-center lg:text-left hidden lg:block">
             <h1 class="text-2xl font-black italic tracking-tighter text-slate-950 uppercase leading-none">Gas Command</h1>
-            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.0.1 Polish Edition</p>
+            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.0.2 Sync Perfected</p>
         </div>
         <nav class="mobile-grid-nav lg:flex-col lg:p-6 lg:space-y-3">
             <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-box nav-box-active lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-5 lg:py-4 lg:rounded-xl lg:text-base">即時監控</button>
@@ -255,7 +254,6 @@
                 </div>`;
             }).join('');
 
-            // 🟡 小卡內容優化：手機版標題適度縮小
             document.getElementById('monitor-modal-content').innerHTML = `
                 <div class="flex flex-col md:flex-row gap-10">
                     <div class="md:w-[30%] border-b md:border-b-0 md:border-r border-slate-100 pb-8 md:pb-0 md:pr-10">
@@ -341,13 +339,23 @@
             </div>`;
         }
 
+        // --- 🟢 編輯任務邏輯優化：預填氣體數據修正 ---
         function editTask(id) {
             const item = localSchedules.find(s => s.id.toString() === id.toString()); if (!item) return;
-            document.getElementById('editId').value = item.id; document.getElementById('userName').value = item.user; document.getElementById('surgeryDate').value = item.date; document.getElementById('hospitalName').value = item.hospital;
-            document.getElementById('heGas').value = item.he + ' PSI'; document.getElementById('ar1Gas').value = item.ar1 + ' PSI';
-            document.getElementById('ar2Gas').value = item.ar2 === '無' ? '無' : item.ar2 + ' PSI';
+            document.getElementById('editId').value = item.id; 
+            document.getElementById('userName').value = item.user; 
+            document.getElementById('surgeryDate').value = item.date; 
+            document.getElementById('hospitalName').value = item.hospital;
+            
+            // 🟡 這裡改為帶入純數值，確保與 Select Option 的 Value 匹配
+            document.getElementById('heGas').value = item.he; 
+            document.getElementById('ar1Gas').value = item.ar1;
+            document.getElementById('ar2Gas').value = item.ar2; // 若為"無"也能正確對應
+
             document.getElementById('weekdayDisplay').innerText = item.weekday;
-            document.getElementById('formTitle').innerText = "Edit Sync Task"; document.getElementById('submitBtn').classList.add('hidden'); document.getElementById('editControls').classList.remove('hidden');
+            document.getElementById('formTitle').innerText = "Edit Sync Task"; 
+            document.getElementById('submitBtn').classList.add('hidden'); 
+            document.getElementById('editControls').classList.remove('hidden');
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
@@ -372,12 +380,13 @@
         function initForms() {
             const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName'); const gSels = document.querySelectorAll('.gas-sel');
             USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
+            // 🟡 這裡的 Value 是 v (純數字)，所以編輯時也要帶入純數字
             for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
             gSels[2].add(new Option('無', '無'), 0);
             document.getElementById('surgeryDate').addEventListener('input', (e) => { const days=['週日','週一','週二','週三','週四','週五','週六']; document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--'; });
             document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
                 e.preventDefault(); const btn = document.querySelector('#editControls:not(.hidden) button[type="submit"]') || document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "SYNCING...";
-                const data = { id: document.getElementById('editId').value || Date.now().toString(), user: document.getElementById('userName').value, date: document.getElementById('surgeryDate').value, weekday: document.getElementById('weekdayDisplay').innerText, hospital: document.getElementById('hospitalName').value, cases: "1", he: document.getElementById('heGas').value.replace(' PSI',''), ar1: document.getElementById('ar1Gas').value.replace(' PSI',''), ar2: document.getElementById('ar2Gas').value.replace(' PSI',''), status: 'pending' };
+                const data = { id: document.getElementById('editId').value || Date.now().toString(), user: document.getElementById('userName').value, date: document.getElementById('surgeryDate').value, weekday: document.getElementById('weekdayDisplay').innerText, hospital: document.getElementById('hospitalName').value, cases: "1", he: document.getElementById('heGas').value, ar1: document.getElementById('ar1Gas').value, ar2: document.getElementById('ar2Gas').value, status: 'pending' };
                 const success = await saveToCloud(data);
                 if (success) { const idx = localSchedules.findIndex(s => s.id.toString() === data.id.toString()); if (idx > -1) localSchedules[idx] = data; else localSchedules.push(data); renderScheduleList(); resetForm(); }
                 btn.disabled = false; btn.innerText = "Confirm Sync";
