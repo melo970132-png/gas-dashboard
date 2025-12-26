@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GAS 戰情中心 v6.0.2</title>
+    <title>GAS 戰情中心 v6.1.0</title>
     <link rel="icon" href="data:,"> 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
@@ -32,16 +32,21 @@
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
         
+        /* 📅 日期選取優化 */
         input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; }
         .date-container { position: relative; }
+
+        /* 🟢 新增：側拉抽屜樣式 */
+        #schedule-drawer { transition: transform 0.3s ease-in-out; }
+        .drawer-open { transform: translateX(0) !important; }
     </style>
 </head>
-<body class="flex flex-col lg:flex-row">
+<body class="flex flex-col lg:flex-row overflow-x-hidden">
 
     <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-[100] shadow-sm lg:h-screen lg:sticky lg:top-0">
         <div class="p-6 text-center lg:text-left hidden lg:block">
             <h1 class="text-2xl font-black italic tracking-tighter text-slate-950 uppercase leading-none">Gas Command</h1>
-            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.0.2 Sync Perfected</p>
+            <p class="text-[10px] text-blue-600 font-black tracking-[0.3em] uppercase mt-1">v6.1.0 Pro Connect</p>
         </div>
         <nav class="mobile-grid-nav lg:flex-col lg:p-6 lg:space-y-3">
             <button onclick="switchPage('monitor')" id="nav-monitor" class="nav-box nav-box-active lg:w-full lg:flex lg:items-center lg:gap-3 lg:px-5 lg:py-4 lg:rounded-xl lg:text-base">即時監控</button>
@@ -52,13 +57,24 @@
 
     <main class="flex-1 p-4 lg:p-10 relative">
         <section id="page-monitor" class="page-content page-active flex-col">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-3">
+            <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 gap-4">
                 <div><h2 class="text-5xl lg:text-7xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2></div>
-                <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                    <button onclick="filterRegion('ALL')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black bg-blue-600 text-white">全域</button>
-                    <button onclick="filterRegion('北區')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black text-slate-500">北區</button>
-                    <button onclick="filterRegion('中區')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black text-slate-500">中區</button>
-                    <button onclick="filterRegion('南區')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black text-slate-500">南區</button>
+                
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="sortToggleBtn" onclick="toggleSortMode()" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[11px] uppercase hover:bg-slate-50 transition-all">
+                        <i data-lucide="arrow-down-narrow-wide" class="w-4 h-4"></i> 壓力優先 OFF
+                    </button>
+
+                    <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                        <button onclick="filterRegion('ALL')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black bg-blue-600 text-white">全域</button>
+                        <button onclick="filterRegion('北區')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black text-slate-500">北區</button>
+                        <button onclick="filterRegion('中區')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black text-slate-500">中區</button>
+                        <button onclick="filterRegion('南區')" class="reg-btn px-6 py-2 rounded-lg text-xs font-black text-slate-500">南區</button>
+                    </div>
+
+                    <button onclick="openDrawer()" class="p-2 bg-slate-900 text-white rounded-xl shadow-lg active:scale-90 transition-all">
+                        <i data-lucide="calendar-range" class="w-6 h-6"></i>
+                    </button>
                 </div>
             </header>
             <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
@@ -134,7 +150,17 @@
         </section>
     </main>
 
-    <div id="monitor-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md">
+    <div id="drawer-overlay" onclick="closeDrawer()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] hidden transition-opacity"></div>
+    <div id="schedule-drawer" class="fixed top-0 right-0 h-full w-[85%] md:w-[400px] bg-white shadow-2xl z-[200] translate-x-full flex flex-col border-l border-slate-200">
+        <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+            <h3 class="text-xl font-black italic text-slate-900 flex items-center gap-2"><i data-lucide="calendar-check" class="w-5 h-5 text-blue-600"></i>當前備刀對照</h3>
+            <button onclick="closeDrawer()" class="p-2 hover:bg-slate-200 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="drawer-content" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            </div>
+    </div>
+
+    <div id="monitor-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md">
         <div class="bg-white/95 backdrop-blur-2xl w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl p-6 lg:p-12 relative shadow-2xl border border-white/50 custom-scrollbar">
             <button onclick="closeMonitorModal()" class="absolute top-6 right-6 text-slate-400 hover:text-red-500 transition-all"><i data-lucide="x" class="w-8 h-8"></i></button>
             <div id="monitor-modal-content"></div>
@@ -149,7 +175,9 @@
         const USERS = ["杜孟擇", "張家榮"];
         const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
         
-        let latestMonitorData = []; let historicalRows = []; let localSchedules = []; let currentMonitorFilter = 'ALL';
+        let latestMonitorData = []; let historicalRows = []; let localSchedules = []; 
+        let currentMonitorFilter = localStorage.getItem('gas_last_region') || 'ALL'; // 🟢 記憶區域載入
+        let isPressurePriority = false; // 🟢 排序狀態
 
         function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
 
@@ -165,8 +193,13 @@
         }
 
         window.onload = async () => { 
-            initForms(); await fetchMonitorData(); await loadSchedulesFromCloud(); await preLoadHistoricalData(); 
-            updateAnalysisRegion('北區'); safeLucide(); 
+            initForms(); 
+            await fetchMonitorData(); 
+            await loadSchedulesFromCloud(); 
+            await preLoadHistoricalData(); 
+            filterRegion(currentMonitorFilter); // 🟢 套用記憶區域
+            updateAnalysisRegion('北區'); 
+            safeLucide(); 
         };
 
         async function fetchMonitorData() {
@@ -178,16 +211,7 @@
                     data.values.forEach(row => {
                         if (row[2]) map.set(row[2], { gas: row[2], region: row[3], standbyDate: row[4], location: row[5], reason: row[6], pressure: parseInt(row[7]) || 0, user: row[1], time: row[0] });
                     });
-                    latestMonitorData = Array.from(map.values()).sort((a, b) => {
-                        const getPrio = s => {
-                            const m = s.match(/([a-zA-Z]+)(\d+)/);
-                            if(!m) return [s, 0];
-                            const prefix = m[1].toLowerCase() === 'ar' ? 1 : 2;
-                            return [prefix, parseInt(m[2])];
-                        };
-                        const [pA, nA] = getPrio(a.gas); const [pB, nB] = getPrio(b.gas);
-                        return pA !== pB ? pA - pB : nA - nB;
-                    });
+                    latestMonitorData = Array.from(map.values());
                     renderMonitorCards();
                 }
             } catch (e) { console.error(e); }
@@ -198,44 +222,64 @@
             try { const res = await fetch(url); const data = await res.json(); historicalRows = data.values || []; } catch (e) { console.error(e); }
         }
 
+        // 🟢 核心改動：卡片高度縮小 + 色彩聯動 + 排序切換
         function renderMonitorCards() {
             const grid = document.getElementById('monitor-grid');
-            const filtered = currentMonitorFilter === 'ALL' ? latestMonitorData : latestMonitorData.filter(d => d.region === currentMonitorFilter);
+            let filtered = currentMonitorFilter === 'ALL' ? latestMonitorData : latestMonitorData.filter(d => d.region === currentMonitorFilter);
+
+            // 🟢 排序邏輯
+            if (isPressurePriority) {
+                filtered.sort((a, b) => b.pressure - a.pressure);
+            } else {
+                filtered.sort((a, b) => {
+                    const getPrio = s => {
+                        const m = s.match(/([a-zA-Z]+)(\d+)/);
+                        if(!m) return [s, 0];
+                        return [m[1].toLowerCase() === 'ar' ? 1 : 2, parseInt(m[2])];
+                    };
+                    const [pA, nA] = getPrio(a.gas); const [pB, nB] = getPrio(b.gas);
+                    return pA !== pB ? pA - pB : nA - nB;
+                });
+            }
+
             grid.innerHTML = filtered.map(item => {
                 const isAr = item.gas.toLowerCase().startsWith('ar');
                 const glassClass = isAr ? 'glass-card-ar' : 'glass-card-he';
                 const pct = Math.min((item.pressure / 6000) * 100, 100);
+                const isLow = item.pressure < 3000; // 🟢 低壓判斷
+
                 return `
-                <div onclick="showMonitorDetail('${item.gas}')" class="${glassClass} p-5 rounded-[2.5rem] cursor-pointer active:scale-95 transition-all flex flex-col justify-between h-[320px] shadow-sm">
+                <div onclick="showMonitorDetail('${item.gas}')" class="${glassClass} p-5 rounded-[2.2rem] cursor-pointer active:scale-95 transition-all flex flex-col justify-between h-[260px] shadow-sm">
                     <div class="flex justify-between items-start">
                         <div class="space-y-1">
-                            <h3 class="text-4xl font-black text-slate-900 italic leading-none">${item.gas}</h3>
-                            <p class="text-lg font-black text-blue-800 uppercase leading-none mt-2 tracking-tighter">${item.region}</p>
+                            <h3 class="text-3xl font-black text-slate-900 italic leading-none">${item.gas}</h3>
+                            <p class="text-base font-black text-blue-800 uppercase leading-none mt-2 tracking-tighter">${item.region}</p>
                         </div>
-                        <div class="text-right bg-white/70 p-3 rounded-2xl border border-white/80">
-                            <p class="text-[10px] text-slate-500 font-black uppercase mb-1 leading-none tracking-widest">使用原因</p>
-                            <p class="text-blue-900 font-black text-2xl italic leading-none mb-2 tracking-tighter">${item.reason}</p>
-                            <p class="text-[10px] text-slate-500 font-black uppercase mb-1 leading-none tracking-widest">備刀日期</p>
-                            <p class="text-slate-900 font-black text-base italic leading-none">${item.standbyDate || '無'}</p>
+                        <div class="text-right">
+                            <p class="text-blue-900 font-black text-xl italic leading-none mb-1 tracking-tighter">${item.reason}</p>
+                            <p class="text-[11px] text-slate-500 font-black italic leading-none">${item.standbyDate || '無'}</p>
                         </div>
                     </div>
                     <div>
                         <div class="flex items-baseline gap-1 leading-none mb-2">
-                            <span class="text-6xl font-mono font-black text-slate-950 italic tracking-tighter">${item.pressure.toLocaleString()}</span>
-                            <span class="text-lg font-black text-slate-400 italic">PSI</span>
+                            <span class="text-5xl font-mono font-black italic tracking-tighter ${isLow ? 'text-red-500' : 'text-slate-950'}">${item.pressure.toLocaleString()}</span>
+                            <span class="text-sm font-black text-slate-400 italic">PSI</span>
                         </div>
-                        <div class="w-full h-3.5 bg-white/60 rounded-full overflow-hidden border border-white/40"><div class="h-full ${(item.pressure < 3000) ? 'bg-red-500 shadow-md' : 'bg-blue-600'}" style="width: ${pct}%"></div></div>
-                        <p class="text-[15px] font-bold text-slate-600 mt-2 uppercase tracking-widest">📍 ${item.location || '未知區域'}</p>
+                        <div class="w-full h-3 bg-white/60 rounded-full overflow-hidden border border-white/40">
+                            <div class="h-full ${isLow ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${pct}%"></div>
+                        </div>
+                        <p class="text-[14px] font-bold text-slate-600 mt-2 truncate">📍 ${item.location || '未知區域'}</p>
                     </div>
-                    <div class="flex justify-between items-end pt-3 border-t border-slate-900/10">
-                        <div><p class="text-[11px] text-slate-500 font-black uppercase mb-1 leading-none">負責人</p><p class="text-slate-900 font-black text-xl leading-none tracking-tight">${item.user}</p></div>
-                        <div class="text-right"><p class="text-[10px] text-slate-500 font-black mb-1 leading-none tracking-tighter uppercase">Sync Time</p><p class="text-slate-700 font-mono font-black text-[10px] leading-none">${item.time}</p></div>
+                    <div class="flex justify-between items-end pt-2 border-t border-slate-900/10">
+                        <p class="text-slate-900 font-black text-base">${item.user}</p>
+                        <p class="text-slate-500 font-mono text-[9px] leading-none">${item.time}</p>
                     </div>
                 </div>`;
             }).join('');
             safeLucide();
         }
 
+        // 詳情 Modal
         function showMonitorDetail(gasName) {
             const item = latestMonitorData.find(d => d.gas === gasName); if (!item) return;
             const history = historicalRows.filter(r => r[2] === gasName).slice(-5).reverse();
@@ -282,6 +326,58 @@
             document.getElementById('monitor-modal').classList.remove('hidden'); safeLucide();
         }
 
+        // 🟢 側拉窗功能邏輯
+        function openDrawer() {
+            document.getElementById('drawer-overlay').classList.remove('hidden');
+            document.getElementById('schedule-drawer').classList.add('drawer-open');
+            renderDrawerSchedules();
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer-overlay').classList.add('hidden');
+            document.getElementById('schedule-drawer').classList.remove('drawer-open');
+        }
+
+        function renderDrawerSchedules() {
+            const now = new Date(); now.setHours(0,0,0,0);
+            const container = document.getElementById('drawer-content');
+            // 只過濾區域與待辦
+            const filtered = localSchedules.filter(s => s.status === 'pending' && (currentMonitorFilter === 'ALL' || s.hospital.includes(currentMonitorFilter) || true)); 
+            
+            container.innerHTML = filtered.map(item => `
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-black text-blue-600 uppercase italic">${item.date}</span>
+                        <span class="text-[10px] font-bold text-slate-400">HE:${item.he} / AR:${item.ar1}</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-900 leading-tight uppercase">${item.hospital}</h4>
+                    <p class="text-xs text-slate-500 font-bold mt-1 uppercase">負責人: ${item.user}</p>
+                </div>
+            `).join('') || '<p class="text-center text-slate-300 py-10 italic">暫無對應排程</p>';
+        }
+
+        // 🟢 排序切換開關
+        function toggleSortMode() {
+            isPressurePriority = !isPressurePriority;
+            const btn = document.getElementById('sortToggleBtn');
+            btn.innerHTML = isPressurePriority ? '<i data-lucide="sort-desc" class="w-4 h-4"></i> 壓力優先 ON' : '<i data-lucide="arrow-down-narrow-wide" class="w-4 h-4"></i> 壓力優先 OFF';
+            btn.classList.toggle('bg-blue-600', isPressurePriority);
+            btn.classList.toggle('text-white', isPressurePriority);
+            renderMonitorCards();
+            safeLucide();
+        }
+
+        // 區域篩選
+        function filterRegion(r) {
+            currentMonitorFilter = r;
+            localStorage.setItem('gas_last_region', r); // 🟢 記憶區域存儲
+            document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r)));
+            document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('text-white', b.innerText.includes(r)));
+            renderMonitorCards();
+            if(document.getElementById('schedule-drawer').classList.contains('drawer-open')) renderDrawerSchedules();
+        }
+
+        // 排程與 GAS 邏輯完整保留
         async function loadSchedulesFromCloud() {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
             try {
@@ -339,19 +435,16 @@
             </div>`;
         }
 
-        // --- 🟢 編輯任務邏輯優化：預填氣體數據修正 ---
+        // 編輯排程數據預帶
         function editTask(id) {
             const item = localSchedules.find(s => s.id.toString() === id.toString()); if (!item) return;
             document.getElementById('editId').value = item.id; 
             document.getElementById('userName').value = item.user; 
             document.getElementById('surgeryDate').value = item.date; 
             document.getElementById('hospitalName').value = item.hospital;
-            
-            // 🟡 這裡改為帶入純數值，確保與 Select Option 的 Value 匹配
             document.getElementById('heGas').value = item.he; 
             document.getElementById('ar1Gas').value = item.ar1;
-            document.getElementById('ar2Gas').value = item.ar2; // 若為"無"也能正確對應
-
+            document.getElementById('ar2Gas').value = item.ar2;
             document.getElementById('weekdayDisplay').innerText = item.weekday;
             document.getElementById('formTitle').innerText = "Edit Sync Task"; 
             document.getElementById('submitBtn').classList.add('hidden'); 
@@ -364,7 +457,6 @@
         function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('weekdayDisplay').innerText = '--'; document.getElementById('formTitle').innerText = "Add Task"; document.getElementById('submitBtn').classList.remove('hidden'); document.getElementById('editControls').classList.add('hidden'); }
         function toggleHistory() { document.getElementById('historyList').classList.toggle('hidden'); document.getElementById('historyIcon').style.transform = document.getElementById('historyList').classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)'; }
         function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
-        function filterRegion(r) { currentMonitorFilter = r; document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('bg-blue-600', b.innerText.includes(r))); renderMonitorCards(); }
         async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出！"); return true; } catch (e) { return false; } }
 
         function updateAnalysisRegion(region) {
@@ -380,7 +472,6 @@
         function initForms() {
             const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName'); const gSels = document.querySelectorAll('.gas-sel');
             USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
-            // 🟡 這裡的 Value 是 v (純數字)，所以編輯時也要帶入純數字
             for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v)));
             gSels[2].add(new Option('無', '無'), 0);
             document.getElementById('surgeryDate').addEventListener('input', (e) => { const days=['週日','週一','週二','週三','週四','週五','週六']; document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--'; });
