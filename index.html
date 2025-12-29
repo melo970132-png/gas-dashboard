@@ -333,36 +333,32 @@
     const hSel = document.getElementById('hospitalName');
     const gSels = document.querySelectorAll('.gas-sel');
 
-    // 1. 初始化負責人與醫院下拉選單
+    // 1. 初始化選單
     USERS.forEach(u => uSel.add(new Option(u, u)));
     HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
-
-    // 2. 初始化氣體壓力選項 (6000 降至 2500)
-    for (let v = 6000; v >= 2500; v -= 100) {
-        gSels.forEach(s => s.add(new Option(v + ' PSI', v)));
-    }
-
-    // 3. 為選填欄位 HE2 (索引1), AR2 (索引3), AR3 (索引4) 加上「無」選項
+    for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v))); 
+    
+    // 2. HE2, AR2, AR3 加上「無」選項 (索引需對應 HTML 中的順序)
+    // 假設順序為: 0:HE1, 1:HE2, 2:AR1, 3:AR2, 4:AR3
     [1, 3, 4].forEach(idx => {
         if (gSels[idx]) gSels[idx].add(new Option('無', '無'), 0);
     });
 
-    // 4. 日期輸入變動時，自動計算並顯示星期幾
+    // 3. 日期連動星期
     document.getElementById('surgeryDate').addEventListener('input', (e) => {
-        const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-        const dateVal = e.target.value;
-        if (dateVal) {
-            document.getElementById('weekdayDisplay').innerText = days[new Date(dateVal).getDay()];
-        } else {
-            document.getElementById('weekdayDisplay').innerText = '--';
-        }
+        const days=['週日','週一','週二','週三','週四','週五','週六'];
+        const val = e.target.value;
+        document.getElementById('weekdayDisplay').innerText = val ? days[new Date(val).getDay()] : '--';
     });
 
-    // 5. 表單送出邏輯 (精準對應試算表 A~L 欄位)
+    // 4. 表單送出邏輯 (精準對齊 A1:ID ~ L1:狀態)
     document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
-        // 🟡 這裡的物件屬性順序與 A 到 L 欄位一一對應
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "SYNCING...";
+
+        // 🟡 這裡的順序必須嚴格遵守試算表 A~L 欄位的標題順序
         const data = {
             id: document.getElementById('editId').value || Date.now().toString(), // A: ID
             date: document.getElementById('surgeryDate').value,                  // B: 日期
@@ -378,22 +374,13 @@
             status: 'pending'                                                    // L: 狀態
         };
 
-        // 鎖定按鈕避免重複點擊
-        const btn = document.getElementById('submitBtn');
-        const originalText = btn.innerText;
-        btn.disabled = true;
-        btn.innerText = "SYNCING...";
-
-        // 呼叫儲存函式
         const success = await saveToCloud(data);
-        
         if (success) {
-            await loadSchedulesFromCloud(); // 重新讀取雲端資料
-            resetForm();                   // 清空表單
+            await loadSchedulesFromCloud();
+            resetForm();
         }
-        
         btn.disabled = false;
-        btn.innerText = originalText;
+        btn.innerText = "Confirm Sync";
     });
 }
     function toggleHistory() { document.getElementById('historyList').classList.toggle('hidden'); document.getElementById('historyIcon').style.transform = document.getElementById('historyList').classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)'; }
