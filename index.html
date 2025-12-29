@@ -218,13 +218,17 @@
 
 function renderDrawerSchedules() {
     const container = document.getElementById('drawer-content');
-    const pending = localSchedules.filter(s => s.status === 'pending');
+    
+    // 🟢 關鍵修正：先篩選 pending，再執行 .sort() 依照日期 (date) 由近到遠排序
+    const pending = localSchedules
+        .filter(s => s.status === 'pending')
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
     
     container.innerHTML = pending.map(item => {
+        // 氣體標籤生成邏輯 (維持大字版優化)
         const makeTag = (label, val, isHe) => {
             if (!val || val === "無" || val === "") return '';
             const color = isHe ? 'text-purple-600' : 'text-blue-600';
-            // 🟡 抽屜內的氣體字體同步加大
             return `
                 <div class="inline-flex items-center mr-3 mb-1">
                     <span class="text-[10px] font-black ${color} opacity-60 mr-1">${label}</span>
@@ -257,8 +261,10 @@ function renderDrawerSchedules() {
                 </div>
             </div>
         </div>`;
-    }).join('') || '<p class="text-center text-slate-300 py-10 italic">目前無排程</p>';
-    safeLucide(); // 🟢 確保抽屜圖示能正常顯示
+    }).join('') || '<p class="text-center text-slate-300 py-10 italic">目前無待辦排程</p>';
+    
+    // 確保 Lucide 圖示正確載入
+    safeLucide(); 
 }
     function showMonitorDetail(gasName) {
         const item = latestMonitorData.find(d => d.gas === gasName); if (!item) return;
