@@ -260,19 +260,55 @@
     async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出！"); return true; } catch (e) { return false; } }
 
     async function loadSchedulesFromCloud() {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:J2000?key=${API_KEY}`;
-        try { const res = await fetch(url); const data = await res.json(); if (data.values) { localSchedules = data.values.map(r => ({ id: r[0], date: r[1], weekday: r[2], hospital: r[3], user: r[4], cases: r[5], he: r[6], ar1: r[7], ar2: r[8], he2: r[9] || '無', ar3: r[10] || '無', status: r[11] || r[9] })); renderScheduleList(); } } catch (e) { console.error(e); }
-    }
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:M2000?key=${API_KEY}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.values) {
+            localSchedules = data.values.map(r => ({
+                id: r[0],          // A: ID
+                date: r[1],        // B: 日期
+                weekday: r[2],     // C: 星期
+                hospital: r[3],    // D: 醫院
+                user: r[4],        // E: 負責人
+                cases: r[5],       // F: 台數
+                he: r[6],          // G: He (He1)
+                he2: r[7] || '無',  // H: He2
+                ar1: r[8],         // I: Ar1
+                ar2: r[9] || '無',  // J: Ar2
+                ar3: r[10] || '無', // K: Ar3
+                status: r[11] || 'pending' // L: 狀態 (給予預設值防止當機)
+            }));
+            renderScheduleList();
+        }
+    } catch (e) { console.error("排程載入失敗:", e); }
+}
 
     function renderScheduleList() {
-        const now = new Date(); now.setHours(0,0,0,0); const grid = document.getElementById('scheduleGrid'); const alertGrid = document.getElementById('alertGrid'); const historyList = document.getElementById('historyList');
-        const alerts = localSchedules.filter(s => new Date(s.date) < now && s.status === 'pending'); document.getElementById('alertSection').classList.toggle('hidden', alerts.length === 0);
-        alertGrid.innerHTML = alerts.map(item => getItemHtml(item, 'border-l-8 border-amber-500 bg-amber-50/30')).join('');
-        const pending = localSchedules.filter(s => new Date(s.date) >= now && s.status === 'pending').sort((a,b) => new Date(a.date) - new Date(b.date));
-        grid.innerHTML = pending.map(item => getItemHtml(item, 'hover:border-blue-400 cursor-pointer')).join('') || '<p class="text-base italic py-16 text-center text-slate-300">目前無待辦任務</p>';
-        const history = localSchedules.filter(s => s.status !== 'pending').sort((a,b) => new Date(b.date) - new Date(a.date));
-        historyList.innerHTML = history.map(item => `<div class="flex justify-between items-center bg-white/70 p-5 rounded-2xl border border-slate-100 opacity-60"><div class="flex flex-col"><span class="text-[10px] text-slate-400 line-through mb-1">${item.date}</span><span class="text-lg font-black text-slate-500 line-through">${item.hospital}</span></div><div class="flex gap-3"><span class="text-[9px] font-black px-2 py-1 rounded ${item.status==='done'?'bg-green-100 text-green-600':'bg-red-100 text-red-600'}">${item.status.toUpperCase()}</span></div></div>`).join('') || '<p class="text-sm text-center py-6 text-slate-400">尚無近期紀錄</p>'; safeLucide();
-    }
+    const now = new Date(); now.setHours(0,0,0,0);
+    const grid = document.getElementById('scheduleGrid');
+    const alertGrid = document.getElementById('alertGrid');
+    const historyList = document.getElementById('historyList');
+
+    const alerts = localSchedules.filter(s => new Date(s.date) < now && s.status === 'pending');
+    document.getElementById('alertSection').classList.toggle('hidden', alerts.length === 0);
+    alertGrid.innerHTML = alerts.map(item => getItemHtml(item, 'border-l-8 border-amber-500 bg-amber-50/30')).join('');
+
+    const pending = localSchedules.filter(s => new Date(s.date) >= now && s.status === 'pending').sort((a,b) => new Date(a.date) - new Date(b.date));
+    grid.innerHTML = pending.map(item => getItemHtml(item, 'hover:border-blue-400 cursor-pointer')).join('') || '<p class="text-base italic py-16 text-center text-slate-300">目前無待辦任務</p>';
+
+    const history = localSchedules.filter(s => s.status !== 'pending').sort((a,b) => new Date(b.date) - new Date(a.date));
+    historyList.innerHTML = history.map(item => `
+        <div class="flex justify-between items-center bg-white/70 p-5 rounded-2xl border border-slate-100 opacity-60">
+            <div class="flex flex-col"><span class="text-[10px] text-slate-400 line-through mb-1">${item.date}</span><span class="text-lg font-black text-slate-500 line-through">${item.hospital}</span></div>
+            <div class="flex gap-3">
+                <span class="text-[9px] font-black px-2 py-1 rounded ${(item.status || 'pending')==='done'?'bg-green-100 text-green-600':'bg-red-100 text-red-600'}">
+                    ${(item.status || 'pending').toUpperCase()}
+                </span>
+            </div>
+        </div>`).join('') || '<p class="text-sm text-center py-6 text-slate-400">尚無近期紀錄</p>';
+    safeLucide();
+}
 
     function getItemHtml(item, customClass) { 
         let gasStr = `HE1:${item.he} / AR1:${item.ar1}`;
@@ -292,17 +328,74 @@
     }
 
     async function preLoadHistoricalData() { const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:H3000?key=${API_KEY}`; try { const res = await fetch(url); const data = await res.json(); historicalRows = data.values || []; } catch (e) { console.error(e); } }
-    function initForms() {
-        const uSel = document.getElementById('userName'); const hSel = document.getElementById('hospitalName'); const gSels = document.querySelectorAll('.gas-sel');
-        USERS.forEach(u => uSel.add(new Option(u, u))); HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
-        for(let v=6000; v>=2500; v-=100) gSels.forEach(s => s.add(new Option(v+' PSI', v))); 
-        [1,3,4].forEach(idx => gSels[idx].add(new Option('無', '無'), 0)); // HE2, AR2, AR3 加上無
-        document.getElementById('surgeryDate').addEventListener('input', (e) => { const days=['週日','週一','週二','週三','週四','週五','週六']; document.getElementById('weekdayDisplay').innerText = days[new Date(e.target.value).getDay()] || '--'; });
-        document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
-            e.preventDefault(); const data = { id: document.getElementById('editId').value || Date.now().toString(), user: document.getElementById('userName').value, date: document.getElementById('surgeryDate').value, weekday: document.getElementById('weekdayDisplay').innerText, hospital: document.getElementById('hospitalName').value, cases: "1", he: document.getElementById('heGas').value, ar1: document.getElementById('ar1Gas').value, ar2: document.getElementById('ar2Gas').value, he2: document.getElementById('he2Gas').value, ar3: document.getElementById('ar3Gas').value, status: 'pending' };
-            await saveToCloud(data); loadSchedulesFromCloud(); resetForm();
-        });
+   function initForms() {
+    const uSel = document.getElementById('userName');
+    const hSel = document.getElementById('hospitalName');
+    const gSels = document.querySelectorAll('.gas-sel');
+
+    // 1. 初始化負責人與醫院下拉選單
+    USERS.forEach(u => uSel.add(new Option(u, u)));
+    HOSPITALS.forEach(h => hSel.add(new Option(h, h)));
+
+    // 2. 初始化氣體壓力選項 (6000 降至 2500)
+    for (let v = 6000; v >= 2500; v -= 100) {
+        gSels.forEach(s => s.add(new Option(v + ' PSI', v)));
     }
+
+    // 3. 為選填欄位 HE2 (索引1), AR2 (索引3), AR3 (索引4) 加上「無」選項
+    [1, 3, 4].forEach(idx => {
+        if (gSels[idx]) gSels[idx].add(new Option('無', '無'), 0);
+    });
+
+    // 4. 日期輸入變動時，自動計算並顯示星期幾
+    document.getElementById('surgeryDate').addEventListener('input', (e) => {
+        const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+        const dateVal = e.target.value;
+        if (dateVal) {
+            document.getElementById('weekdayDisplay').innerText = days[new Date(dateVal).getDay()];
+        } else {
+            document.getElementById('weekdayDisplay').innerText = '--';
+        }
+    });
+
+    // 5. 表單送出邏輯 (精準對應試算表 A~L 欄位)
+    document.getElementById('surgeryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // 🟡 這裡的物件屬性順序與 A 到 L 欄位一一對應
+        const data = {
+            id: document.getElementById('editId').value || Date.now().toString(), // A: ID
+            date: document.getElementById('surgeryDate').value,                  // B: 日期
+            weekday: document.getElementById('weekdayDisplay').innerText,        // C: 星期
+            hospital: document.getElementById('hospitalName').value,             // D: 醫院
+            user: document.getElementById('userName').value,                     // E: 負責人
+            cases: "1",                                                          // F: 台數
+            he: document.getElementById('heGas').value,                           // G: He (He1)
+            he2: document.getElementById('he2Gas').value,                         // H: He2
+            ar1: document.getElementById('ar1Gas').value,                        // I: Ar1
+            ar2: document.getElementById('ar2Gas').value,                        // J: Ar2
+            ar3: document.getElementById('ar3Gas').value,                        // K: Ar3
+            status: 'pending'                                                    // L: 狀態
+        };
+
+        // 鎖定按鈕避免重複點擊
+        const btn = document.getElementById('submitBtn');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "SYNCING...";
+
+        // 呼叫儲存函式
+        const success = await saveToCloud(data);
+        
+        if (success) {
+            await loadSchedulesFromCloud(); // 重新讀取雲端資料
+            resetForm();                   // 清空表單
+        }
+        
+        btn.disabled = false;
+        btn.innerText = originalText;
+    });
+}
     function toggleHistory() { document.getElementById('historyList').classList.toggle('hidden'); document.getElementById('historyIcon').style.transform = document.getElementById('historyList').classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)'; }
     function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
     function switchPage(pageID) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-' + pageID).classList.add('page-active'); document.querySelectorAll('.nav-box').forEach(btn => btn.classList.remove('nav-box-active', 'desktop-nav-active')); const activeBtn = document.getElementById('nav-' + pageID); activeBtn.classList.add('nav-box-active'); if (window.innerWidth >= 1024) activeBtn.classList.add('desktop-nav-active'); safeLucide(); window.scrollTo(0,0); }
