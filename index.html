@@ -217,20 +217,31 @@
     }
 
     function renderDrawerSchedules() {
-        const container = document.getElementById('drawer-content'); const pending = localSchedules.filter(s => s.status === 'pending');
-        container.innerHTML = pending.map(item => {
-            // 🟢 氣體數量顯示優化：有填才顯示
-            let gasText = `HE1:${item.he} / AR1:${item.ar1}`;
-            if(item.he2 && item.he2 !== "無") gasText += ` / HE2:${item.he2}`;
-            if(item.ar2 && item.ar2 !== "無") gasText += ` / AR2:${item.ar2}`;
-            if(item.ar3 && item.ar3 !== "無") gasText += ` / AR3:${item.ar3}`;
-            return `<div onclick="drawerCompleteTask('${item.id}')" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all active:scale-95 shadow-sm">
-                <div class="flex justify-between items-center mb-1"><span class="text-[11px] font-black text-blue-600 italic uppercase">${item.date}</span><span class="text-[13px] font-black text-slate-700">${gasText}</span></div>
-                <h4 class="text-lg font-black text-slate-900 leading-tight uppercase">${item.hospital}</h4>
-                <div class="flex justify-between items-center mt-1"><p class="text-xs text-slate-500 font-bold uppercase">BY: ${item.user}</p><span class="text-[9px] font-black text-blue-400">點擊完工</span></div>
-            </div>`;
-        }).join('') || '<p class="text-center text-slate-300 py-10 italic">目前無排程</p>';
-    }
+    const container = document.getElementById('drawer-content');
+    const pending = localSchedules.filter(s => s.status === 'pending');
+    
+    container.innerHTML = pending.map(item => {
+        let gasList = [];
+        if (item.he) gasList.push(`HE1:${item.he}`);
+        if (item.he2 && item.he2 !== "無") gasList.push(`HE2:${item.he2}`);
+        if (item.ar1) gasList.push(`AR1:${item.ar1}`);
+        if (item.ar2 && item.ar2 !== "無") gasList.push(`AR2:${item.ar2}`);
+        if (item.ar3 && item.ar3 !== "無") gasList.push(`AR3:${item.ar3}`);
+        
+        return `
+        <div onclick="drawerCompleteTask('${item.id}')" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 cursor-pointer hover:bg-blue-50 transition-all shadow-sm">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-[11px] font-black text-blue-600 uppercase italic">${item.date}</span>
+                <span class="text-[12px] font-black text-slate-700">${gasList.join(' / ')}</span>
+            </div>
+            <h4 class="text-lg font-black text-slate-900 leading-tight uppercase">${item.hospital}</h4>
+            <div class="flex justify-between items-center mt-1">
+                <p class="text-xs text-slate-500 font-bold uppercase">BY: ${item.user}</p>
+                <span class="text-[9px] font-black text-blue-400">點擊完工</span>
+            </div>
+        </div>`;
+    }).join('') || '<p class="text-center text-slate-300 py-10 italic">目前無排程</p>';
+}
 
     function showMonitorDetail(gasName) {
         const item = latestMonitorData.find(d => d.gas === gasName); if (!item) return;
@@ -257,9 +268,10 @@
     async function completeTask() { if(!confirm("完工？")) return; const id = document.getElementById('editId').value; const item = localSchedules.find(s => s.id.toString() === id); item.status = 'done'; await saveToCloud(item); loadSchedulesFromCloud(); resetForm(); }
     async function cancelTask() { if(!confirm("取消？")) return; const id = document.getElementById('editId').value; const item = localSchedules.find(s => s.id.toString() === id); item.status = 'cancelled'; await saveToCloud(item); loadSchedulesFromCloud(); resetForm(); }
     function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Task"; document.getElementById('submitBtn').classList.remove('hidden'); document.getElementById('editControls').classList.add('hidden'); document.getElementById('weekdayDisplay').innerText='--'; }
-    async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出！"); return true; } catch (e) { return false; } }
+    async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出"); return true; } catch (e) { return false; } }
 
-    async function loadSchedulesFromCloud() {
+   async function loadSchedulesFromCloud() {
+    // 🟢 這裡範圍改成 A2:M2000 以確保抓到最後一欄更新時間
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:M2000?key=${API_KEY}`;
     try {
         const res = await fetch(url);
@@ -272,16 +284,16 @@
                 hospital: r[3],    // D: 醫院
                 user: r[4],        // E: 負責人
                 cases: r[5],       // F: 台數
-                he: r[6],          // G: He (He1)
+                he: r[6],          // G: He
                 he2: r[7] || '無',  // H: He2
                 ar1: r[8],         // I: Ar1
                 ar2: r[9] || '無',  // J: Ar2
                 ar3: r[10] || '無', // K: Ar3
-                status: r[11] || 'pending' // L: 狀態 (給予預設值防止當機)
+                status: r[11] || 'pending' // L: 狀態 (賦予預設值防止 toUpperCase 錯誤)
             }));
             renderScheduleList();
         }
-    } catch (e) { console.error("排程載入失敗:", e); }
+    } catch (e) { console.error("資料讀取失敗:", e); }
 }
 
     function renderScheduleList() {
@@ -310,13 +322,32 @@
     safeLucide();
 }
 
-    function getItemHtml(item, customClass) { 
-        let gasStr = `HE1:${item.he} / AR1:${item.ar1}`;
-        if(item.he2 && item.he2 !== "無") gasStr += `<br>HE2:${item.he2}`;
-        if(item.ar2 && item.ar2 !== "無") gasStr += `<br>AR2:${item.ar2}`;
-        if(item.ar3 && item.ar3 !== "無") gasStr += `<br>AR3:${item.ar3}`;
-        return `<div onclick="editTask('${item.id}')" class="bg-white p-6 rounded-[2.5rem] border border-slate-100 flex justify-between items-center shadow-sm transition-all active:scale-[0.98] ${customClass}"><div class="flex flex-col"><span class="text-sm font-black text-blue-600 italic mb-1">${item.weekday || ''} ${item.date}</span><span class="text-xl font-black text-slate-900 uppercase">${item.hospital}</span><span class="text-[13px] text-slate-400 font-bold uppercase mt-1">負責人: ${item.user}</span></div><div class="flex gap-3"><div class="bg-blue-50 px-5 py-4 rounded-[1.5rem] text-center shadow-inner leading-tight"><p class="text-[10px] font-black text-blue-500 mb-1.5 uppercase">GAS INFO</p><p class="text-xs font-black text-slate-700 italic">${gasStr}</p></div></div></div>`; 
-    }
+   function getItemHtml(item, customClass) {
+    // 🟢 組裝氣體資訊：只有「非無」的欄位才會顯示出來
+    let gasList = [];
+    if (item.he) gasList.push(`HE1: ${item.he}`);
+    if (item.he2 && item.he2 !== "無") gasList.push(`HE2: ${item.he2}`);
+    if (item.ar1) gasList.push(`AR1: ${item.ar1}`);
+    if (item.ar2 && item.ar2 !== "無") gasList.push(`AR2: ${item.ar2}`);
+    if (item.ar3 && item.ar3 !== "無") gasList.push(`AR3: ${item.ar3}`);
+    
+    const gasStr = gasList.join(' / ');
+
+    return `
+    <div onclick="editTask('${item.id}')" class="bg-white p-6 rounded-[2.5rem] border border-slate-100 flex justify-between items-center shadow-sm transition-all active:scale-[0.98] ${customClass}">
+        <div class="flex flex-col">
+            <span class="text-sm font-black text-blue-600 uppercase italic mb-1">${item.weekday || ''} ${item.date}</span>
+            <span class="text-xl lg:text-2xl font-black text-slate-900 leading-tight tracking-tight uppercase">${item.hospital}</span>
+            <span class="text-[13px] text-slate-400 font-bold uppercase mt-1">負責人: ${item.user}</span>
+        </div>
+        <div class="flex gap-3 text-right">
+            <div class="bg-blue-50 px-5 py-4 rounded-[1.5rem] shadow-inner">
+                <p class="text-[10px] font-black text-blue-500 mb-1 uppercase tracking-widest">GAS ALLOTMENT</p>
+                <p class="text-sm font-black text-slate-700 italic leading-snug">${gasStr}</p>
+            </div>
+        </div>
+    </div>`;
+}
 
     function updateAnalysisRegion(region) {
         document.querySelectorAll('.ana-reg-btn').forEach(btn => btn.className = btn.innerText.includes(region) ? "ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md" : "ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200");
