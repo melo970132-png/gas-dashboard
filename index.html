@@ -13,19 +13,18 @@
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; margin: 0; padding: 0; }
         .glass-card-ar { background: rgba(224, 242, 254, 0.95); backdrop-filter: blur(12px); border: 2px solid #bae6fd; }
         .glass-card-he { background: rgba(245, 243, 255, 0.95); backdrop-filter: blur(12px); border: 2px solid #ddd6fe; }
-        @media (max-width: 1023px) {
-            .mobile-grid-nav { 
-                display: flex !important; 
-                position: sticky; 
-                top: 0; 
-                z-index: 100; 
-                /* 🟢 關鍵：設定固定高度，讓下層 Header 知道要吸附在哪 */
-                height: 64px; 
-                padding: 10px; 
-                gap: 8px; 
-                background: white; 
-                border-bottom: 1px solid #e2e8f0; 
-            }
+        /* 🟢 修正：手機第一層導覽列固定高度與吸附 */
+.mobile-grid-nav { 
+    display: flex !important; 
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
+    height: 60px; /* 縮小高度節省空間 */
+    padding: 8px; 
+    gap: 8px; 
+    background: white; 
+    border-bottom: 1px solid #e2e8f0; 
+}
             .nav-box { 
                 flex: 1 !important; 
                 text-align: center; 
@@ -75,6 +74,31 @@
             transition: all 0.15s; cursor: pointer;
         }
         .list-row:hover { background: #edf7ff; }
+        /* --------------------------------------------------------- */
+/* 🎯 這裡就是讓標頭黏住的關鍵代碼 */
+/* --------------------------------------------------------- */
+
+.sticky-header {
+    position: sticky;
+    top: 60px; /* 手機版：吸附在第一層導覽列下方 */
+    z-index: 90;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* 🖥️ 電腦版：因為沒有頂部選單，所以直接黏在最上面 */
+@media (min-width: 1024px) {
+    .sticky-header { 
+        top: 0; 
+        padding-top: 20px; 
+        padding-bottom: 20px; 
+    }
+}
+
+/* --------------------------------------------------------- */
+
+         
 
         /* 字體大小校準 */
         .id-text { font-size: 1.1rem; font-weight: 800; italic; color: #334155; font-family: 'JetBrains Mono', monospace; }
@@ -145,30 +169,28 @@
 
     <main class="flex-1 p-4 lg:p-10 relative">
         <section id="page-monitor" class="page-content page-active flex-col">
-            <header class="sticky top-[64px] lg:relative lg:top-0 z-[90] bg-white/95 backdrop-blur-md flex flex-col xl:flex-row justify-between items-start xl:items-end mb-4 lg:mb-8 gap-4 pt-2 pb-4 border-b border-slate-100 lg:border-none">
-    <div>
-        <h2 class="text-3xl lg:text-7xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2>
+            <header class="sticky-header flex flex-col xl:flex-row justify-between items-start xl:items-end mb-4 lg:mb-8 gap-4 px-2">
+    <div class="hidden lg:block">
+        <h2 class="text-7xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-        <button id="viewToggleBtn" onclick="toggleViewCycle()" class="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase hover:bg-slate-50 transition-all shadow-sm">
-            <i id="viewToggleIcon" data-lucide="list" class="w-3.5 h-3.5 pointer-events-none"></i>
+    <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <button id="viewToggleBtn" onclick="toggleViewCycle()" class="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase">
+            <i id="viewToggleIcon" data-lucide="list" class="w-3.5 h-3.5"></i>
             <span id="viewToggleText">清單模式</span>
         </button>
         
-        <button id="sortToggleBtn" onclick="toggleSortMode()" class="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase hover:bg-slate-50 transition-all">
+        <button id="sortToggleBtn" onclick="toggleSortMode()" class="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase">
             <i data-lucide="arrow-down-narrow-wide" class="w-3.5 h-3.5"></i> OFF
         </button>
 
-        <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-            <button onclick="filterRegion('ALL')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black bg-blue-600 text-white">全域</button>
-            <button onclick="filterRegion('北區')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500">北區</button>
-            <button onclick="filterRegion('中區')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500">中區</button>
-            <button onclick="filterRegion('南區')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500">南區</button>
+        <div class="flex flex-1 lg:flex-none gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+            <button onclick="filterRegion('ALL')" class="reg-btn flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-600 text-white">全域</button>
+            <button onclick="filterRegion('北區')" class="reg-btn flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-500">北區</button>
+            <button onclick="filterRegion('中區')" class="reg-btn flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-500">中區</button>
+            <button onclick="filterRegion('南區')" class="reg-btn flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-500">南區</button>
         </div>
         
-        <button onclick="openDrawer()" class="p-2 bg-slate-900 text-white rounded-xl shadow-lg active:scale-90 transition-all">
-            <i data-lucide="calendar-range" class="w-5 h-5"></i>
-        </button>
+        <button onclick="openDrawer()" class="p-2 bg-slate-900 text-white rounded-xl shadow-lg"><i data-lucide="calendar-range" class="w-5 h-5"></i></button>
     </div>
 </header>
             <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
