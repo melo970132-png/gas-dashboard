@@ -48,53 +48,6 @@
         .page-content { display: none !important; }
         .page-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-       /* 🎯 質感提示框樣式 (與 sticky-header 風格統一) */
-#custom-alert.show {
-    display: flex;
-    scale: 1;
-    opacity: 1;
-}
-
-.alert-success {
-    background: rgba(34, 197, 94, 0.9); /* 綠色 */
-    backdrop-filter: blur(10px);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.alert-error {
-    background: rgba(239, 68, 68, 0.9); /* 紅色 */
-    backdrop-filter: blur(10px);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-        /* 🎯 升級「放棄編輯」為中性按鈕樣式 */
-.btn-discard {
-    display: block;
-    width: 100%;
-    margin-top: 20px;
-    padding: 12px 0;
-    background-color: #f1f5f9; /* 淡淡的灰藍色 (Slate-100) */
-    color: #64748b;           /* 穩重的深灰色 (Slate-500) */
-    text-align: center;
-    font-size: 16px;          /* 依照你的要求設定為 16px */
-    font-weight: 900;
-    border-radius: 1.25rem;   /* 與其他按鈕一致的圓角 */
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.btn-discard:hover {
-    background-color: #e2e8f0; /* 懸停時加深底色 */
-    color: #475569;
-}
-
-.btn-discard:active {
-    transform: scale(0.98);    /* 點擊時的縮放反饋 */
-}
 /* 🟢 清單模式深度優化 (v6.3.2 最終精確版) */
         #monitor-list-view {
             display: none; width: 100%; background: white;
@@ -200,6 +153,27 @@
         padding-bottom: 10px !important;
     }
 }  
+/* 🎯 專屬樣式：將「放棄編輯」文字轉換為質感按鈕 */
+.btn-discard {
+    display: block;
+    width: 100%;
+    margin-top: 15px;      /* 與上方按鈕保持距離 */
+    padding: 12px 0;
+    background-color: #f1f5f9; /* 淺灰色底 (Slate-100) */
+    color: #64748b;           /* 深灰色字 (Slate-500) */
+    text-align: center;
+    font-size: 16px;          /* 依照你的要求設定為 16px */
+    font-weight: 900;
+    border-radius: 1.25rem;   /* 圓潤大圓角 */
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;     /* 讓縮放效果更平滑 */
+}
+
+.btn-discard:active {
+    transform: scale(0.95);    /* 點擊時會有微縮效果，很有手感 */
+    background-color: #e2e8f0;
+}
 
         /* 字體大小校準 */
         .id-text { font-size: 1.1rem; font-weight: 800; italic; color: #334155; font-family: 'JetBrains Mono', monospace; }
@@ -398,27 +372,6 @@
             }
         } catch (e) { console.error(e); }
     }
-    // 🟢 呼叫質感提示框的函數
-function showToast(msg, type = 'success') {
-    const alertEl = document.getElementById('custom-alert');
-    const msgEl = document.getElementById('alert-message');
-    const iconEl = document.getElementById('alert-icon');
-    
-    // 設定訊息與顏色
-    msgEl.innerText = msg;
-    alertEl.className = `fixed top-24 left-1/2 -translate-x-1/2 z-[2000] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 show ${type === 'success' ? 'alert-success' : 'alert-error'}`;
-    
-    // 切換圖示 (使用 Lucide 圖示)
-    const iconName = type === 'success' ? 'check-circle' : 'alert-triangle';
-    iconEl.setAttribute('data-lucide', iconName);
-    lucide.createIcons();
-
-    // 3秒後自動消失
-    setTimeout(() => {
-        alertEl.classList.remove('show');
-        alertEl.classList.add('opacity-0', 'scale-90');
-    }, 3000);
-}
 
     function renderMonitorMain() { if (currentView === 'list') renderListView(); else renderMonitorCards(); }
 
@@ -733,10 +686,5 @@ function renderDrawerSchedules() {
     function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
     function switchPage(pageID) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-' + pageID).classList.add('page-active'); document.querySelectorAll('.nav-box').forEach(btn => btn.classList.remove('nav-box-active', 'desktop-nav-active')); const activeBtn = document.getElementById('nav-' + pageID); activeBtn.classList.add('nav-box-active'); if (window.innerWidth >= 1024) activeBtn.classList.add('desktop-nav-active'); safeLucide(); window.scrollTo(0,0); }
 </script>
-<div id="custom-alert" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-[2000] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 scale-90 opacity-0">
-    <i id="alert-icon" class="w-5 h-5"></i>
-    <span id="alert-message" class="font-black italic text-sm tracking-tight"></span>
-</div>
-
 </body>
 </html>
