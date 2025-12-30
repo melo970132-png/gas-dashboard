@@ -22,42 +22,73 @@
         .page-content { display: none !important; }
         .page-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        /* 🟢 清單模式深度優化 */
-        #monitor-list-view { 
-            display: none; width: 100%; background: white; 
-            border-radius: 2rem; border: 1px solid #e2e8f0; 
-            overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        /* 🟢 清單模式深度優化 (v6.3.1 緊湊 + 手機防崩潰版) */
+        #monitor-list-view {
+            display: none; width: 100%; background: white;
+            border-radius: 1.5rem; border: 1px solid #e2e8f0;
+            overflow: hidden; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
         }
         .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        
-        /* 重新分配欄位寬度：ID(10%)、PSI(15%)、位置原因(55%)、備刀(20%) */
-        .col-gas { width: 12%; padding-left: 25px !important; }
-        .col-psi { width: 18%; text-align: right !important; padding-right: 30px !important; }
-        .col-info { width: 50%; }
+
+        /* --- 🖥️ 電腦版：緊湊、小字、淡底色 --- */
+        .col-gas { width: 10%; padding-left: 20px !important; }
+        .col-psi { width: 15%; text-align: right !important; padding-right: 20px !important; }
+        .col-info { width: 55%; }
         .col-date { width: 20%; text-align: center !important; }
 
-        .list-table th { 
-            background: #f8fafc; padding: 20px 10px; text-align: left; 
-            font-size: 12px; font-weight: 900; color: #94a3b8; 
-            border-bottom: 2px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.1em;
+        .list-table th {
+            background: #f1f5f9; padding: 12px 10px; text-align: left;
+            font-size: 11px; font-weight: 900; color: #64748b;
+            border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em;
         }
-        .list-row { border-bottom: 1px solid #f8fafc; height: 72px; transition: all 0.2s; cursor: pointer; }
-        .list-row:hover { background: #f0f7ff; transform: scale(1.002); }
+        .list-row {
+            border-bottom: 1px solid #e2e8f0;
+            height: 54px; /* 緊湊高度 */
+            background-color: #f8fafc; /* 淡淡的底色 */
+            transition: all 0.15s; cursor: pointer;
+        }
+        .list-row:hover { background: #edf7ff; }
 
-        /* 🟢 字體大小調整 */
-        .id-text { font-size: 1.25rem; font-weight: 800; italic; color: #1e293b; font-family: 'JetBrains Mono', monospace; }
-        .psi-text { font-size: 1.5rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+        /* 電腦版字體縮小 */
+        .id-text { font-size: 1.1rem; font-weight: 800; italic; color: #334155; font-family: 'JetBrains Mono', monospace; }
+        .psi-text { font-size: 1.3rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+        .location-text { font-size: 0.95rem; font-weight: 700; color: #475569; }
         
-        /* 🟢 原因標籤樣式 */
         .reason-badge {
-            display: inline-flex; align-items: center; padding: 4px 12px; 
-            border-radius: 8px; font-size: 11px; font-weight: 900; 
-            margin-left: 12px; text-transform: uppercase;
+            display: inline-flex; align-items: center; padding: 3px 8px;
+            border-radius: 6px; font-size: 10px; font-weight: 900;
+            margin-left: 8px; text-transform: uppercase; white-space: nowrap;
         }
-        .bg-wait { background: #fee2e2; color: #ef4444; } /* 待灌氣 - 紅 */
-        .bg-standby { background: #dbeafe; color: #2563eb; } /* 備刀 - 藍 */
-        .bg-finish { background: #f1f5f9; color: #64748b; } /* 下刀 - 灰 */
-        .bg-confirm { background: #fef3c7; color: #d97706; } /* 氣體確認 - 橘 */
+        .bg-wait { background: #fecaca; color: #dc2626; }
+        .bg-standby { background: #bfdbfe; color: #1d4ed8; }
+        .bg-finish { background: #e2e8f0; color: #64748b; }
+        .bg-confirm { background: #fde68a; color: #b45309; }
+
+        /* 📱 手機版：響應式 Grid 佈局 (防止畫面崩潰) */
+        @media (max-width: 767px) {
+            .list-table thead { display: none; }
+            .list-table tr.list-row {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto auto;
+                height: auto !important;
+                padding: 16px 20px !important;
+                background: white !important; /* 手機版用白底更清晰 */
+                border-bottom: 4px solid #f1f5f9;
+            }
+            .list-table td { display: block; width: 100% !important; padding: 0 !important; border: none; }
+            .col-gas  { grid-row: 1; grid-column: 1; }
+            .col-psi  { grid-row: 1; grid-column: 2; text-align: right !important; }
+            .col-info { grid-row: 2; grid-column: 1 / span 2; margin-top: 6px; }
+            .col-date { grid-row: 3; grid-column: 1 / span 2; text-align: left !important; margin-top: 10px; }
+            
+            /* 手機版字體適度放大，方便觸控 */
+            .id-text { font-size: 1.4rem; }
+            .psi-text { font-size: 1.6rem; }
+            .location-text { font-size: 1.1rem; display: block; margin-bottom: 4px; }
+        }
+
+        /* 💡 閃爍動畫引擎 */
         @keyframes blink { 50% { opacity: 0.5; } }
         #schedule-drawer { transition: transform 0.3s ease-in-out; }
         .drawer-open { transform: translateX(0) !important; }
@@ -229,31 +260,30 @@
     let data = getFilteredAndSortedData();
     
     tbody.innerHTML = data.map(item => {
-        // 1. 警告邏輯
         const isLow = item.gas.toLowerCase().startsWith('he') ? item.pressure < 3000 : item.pressure < 4000;
+        // 使用 Tailwind 的 animate-pulse 或自定義閃爍動畫
         const psiClass = isLow ? 'text-red-500 animate-pulse' : 'text-slate-900';
         
-        // 2. 原因標籤邏輯
         let badgeClass = "bg-finish";
         if (item.reason.includes("待灌氣")) badgeClass = "bg-wait";
         else if (item.reason.includes("備刀")) badgeClass = "bg-standby";
         else if (item.reason.includes("確認")) badgeClass = "bg-confirm";
 
-        // 3. 備刀日期樣式
         const hasDate = item.standbyDate && item.standbyDate !== "" && item.standbyDate !== "無";
-        const dateStyle = hasDate ? "text-blue-600 font-black text-base" : "text-slate-300 font-medium text-sm";
+        const dateStyle = hasDate ? "text-blue-600 font-black" : "text-slate-400 font-bold";
+        const datePrefix = window.innerWidth < 768 ? '<span class="text-slate-400 font-black mr-2 text-[10px] uppercase">Standby:</span>' : '';
 
         return `
         <tr class="list-row" onclick="showMonitorDetail('${item.gas}')">
             <td class="col-gas"><span class="id-text italic">${item.gas}</span></td>
             <td class="col-psi"><span class="psi-text ${psiClass}">${item.pressure.toLocaleString()}</span></td>
             <td class="col-info">
-                <div class="flex items-center">
-                    <span class="text-lg font-bold text-slate-800">${item.location || '🏢 倉庫'}</span>
-                    <span class="reason-badge ${badgeClass}">${item.reason}</span>
+                <div class="flex flex-col md:flex-row md:items-center">
+                    <span class="location-text truncate">${item.location || '🏢 倉庫'}</span>
+                    <span class="reason-badge ${badgeClass} w-fit">${item.reason}</span>
                 </div>
             </td>
-            <td class="col-date ${dateStyle}">${hasDate ? item.standbyDate : '-'}</td>
+            <td class="col-date ${dateStyle} text-[13px] md:text-base">${datePrefix}${hasDate ? item.standbyDate : '-'}</td>
         </tr>`;
     }).join('');
 }
