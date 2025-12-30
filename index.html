@@ -14,9 +14,36 @@
         .glass-card-ar { background: rgba(224, 242, 254, 0.95); backdrop-filter: blur(12px); border: 2px solid #bae6fd; }
         .glass-card-he { background: rgba(245, 243, 255, 0.95); backdrop-filter: blur(12px); border: 2px solid #ddd6fe; }
         @media (max-width: 1023px) {
-            .mobile-grid-nav { display: flex !important; position: sticky; top: 0; z-index: 100; padding: 10px; gap: 8px; background: white; border-bottom: 1px solid #e2e8f0; }
-            .nav-box { flex: 1 !important; text-align: center; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 0; font-size: 14px; font-weight: 900; color: #64748b; background: #f1f5f9; }
-            .nav-box-active { background: #2563eb !important; color: white !important; border-color: #2563eb !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+            .mobile-grid-nav { 
+                display: flex !important; 
+                position: sticky; 
+                top: 0; 
+                z-index: 100; 
+                /* 🟢 關鍵：設定固定高度，讓下層 Header 知道要吸附在哪 */
+                height: 64px; 
+                padding: 10px; 
+                gap: 8px; 
+                background: white; 
+                border-bottom: 1px solid #e2e8f0; 
+            }
+            .nav-box { 
+                flex: 1 !important; 
+                text-align: center; 
+                border: 1px solid #cbd5e1; 
+                border-radius: 12px; 
+                /* 調整內距以適應固定高度 */
+                padding: 10px 0; 
+                font-size: 14px; 
+                font-weight: 900; 
+                color: #64748b; 
+                background: #f1f5f9; 
+            }
+            .nav-box-active { 
+                background: #2563eb !important; 
+                color: white !important; 
+                border-color: #2563eb !important; 
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); 
+            }
         }
         .desktop-nav-active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
         .page-content { display: none !important; }
@@ -118,15 +145,32 @@
 
     <main class="flex-1 p-4 lg:p-10 relative">
         <section id="page-monitor" class="page-content page-active flex-col">
-            <header class="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 gap-4">
-                <div><h2 class="text-5xl lg:text-7xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2></div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button id="viewToggleBtn" onclick="toggleViewCycle()" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[11px] uppercase hover:bg-slate-50 transition-all shadow-sm"><i id="viewToggleIcon" data-lucide="list" class="w-4 h-4 pointer-events-none"></i><span id="viewToggleText">清單模式</span></button>
-                    <button id="sortToggleBtn" onclick="toggleSortMode()" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[11px] uppercase hover:bg-slate-50 transition-all"><i data-lucide="arrow-down-narrow-wide" class="w-4 h-4"></i> 壓力優先 OFF</button>
-                    <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm"><button onclick="filterRegion('ALL')" class="reg-btn px-4 py-2 rounded-lg text-xs font-black bg-blue-600 text-white">全域</button><button onclick="filterRegion('北區')" class="reg-btn px-4 py-2 rounded-lg text-xs font-black text-slate-500">北區</button><button onclick="filterRegion('中區')" class="reg-btn px-4 py-2 rounded-lg text-xs font-black text-slate-500">中區</button><button onclick="filterRegion('南區')" class="reg-btn px-4 py-2 rounded-lg text-xs font-black text-slate-500">南區</button></div>
-                    <button onclick="openDrawer()" class="p-2 bg-slate-900 text-white rounded-xl shadow-lg active:scale-90 transition-all"><i data-lucide="calendar-range" class="w-6 h-6"></i></button>
-                </div>
-            </header>
+            <header class="sticky top-[64px] lg:relative lg:top-0 z-[90] bg-white/95 backdrop-blur-md flex flex-col xl:flex-row justify-between items-start xl:items-end mb-4 lg:mb-8 gap-4 pt-2 pb-4 border-b border-slate-100 lg:border-none">
+    <div>
+        <h2 class="text-3xl lg:text-7xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Live Status</h2>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <button id="viewToggleBtn" onclick="toggleViewCycle()" class="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase hover:bg-slate-50 transition-all shadow-sm">
+            <i id="viewToggleIcon" data-lucide="list" class="w-3.5 h-3.5 pointer-events-none"></i>
+            <span id="viewToggleText">清單模式</span>
+        </button>
+        
+        <button id="sortToggleBtn" onclick="toggleSortMode()" class="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-black text-[10px] uppercase hover:bg-slate-50 transition-all">
+            <i data-lucide="arrow-down-narrow-wide" class="w-3.5 h-3.5"></i> OFF
+        </button>
+
+        <div class="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+            <button onclick="filterRegion('ALL')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black bg-blue-600 text-white">全域</button>
+            <button onclick="filterRegion('北區')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500">北區</button>
+            <button onclick="filterRegion('中區')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500">中區</button>
+            <button onclick="filterRegion('南區')" class="reg-btn px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500">南區</button>
+        </div>
+        
+        <button onclick="openDrawer()" class="p-2 bg-slate-900 text-white rounded-xl shadow-lg active:scale-90 transition-all">
+            <i data-lucide="calendar-range" class="w-5 h-5"></i>
+        </button>
+    </div>
+</header>
             <div id="monitor-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
             <div id="monitor-list-view" class="mb-20 shadow-xl"><table class="list-table"><thead><tr><th class="col-gas">ID</th><th class="col-psi text-right">PSI</th><th class="col-info">Location / Reason</th><th class="col-date">Standby</th></tr></thead><tbody id="list-body"></tbody></table></div>
         </section>
@@ -180,7 +224,7 @@
                             </div>
                             <div class="bg-slate-50/10 p-3 rounded-xl"><span class="text-[9px] font-black text-slate-300 uppercase mb-1 block leading-none">AR3 (選填)</span><select id="ar3Gas" class="gas-sel w-full bg-transparent border-none font-black text-lg italic outline-none"><option value="無">無</option></select></div>
                             <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 rounded-[1.5rem] font-black text-white text-sm tracking-[0.2em] uppercase italic shadow-lg active:scale-95 transition-all">Confirm Sync</button>
-                            <div id="editControls" class="hidden space-y-3"><button type="submit" class="w-full py-4 bg-blue-900 text-white rounded-2xl font-black text-sm uppercase italic shadow-lg">Update Sync</button><div class="grid grid-cols-2 gap-2"><button type="button" onclick="completeTask()" class="py-4 bg-green-500 text-white rounded-2xl font-black text-xs uppercase">完工</button><button type="button" onclick="cancelTask()" class="py-4 bg-red-500 text-white rounded-2xl font-black text-xs uppercase">取消</button></div><button type="button" onclick="resetForm()" class="w-full text-[10px] text-slate-400 font-bold uppercase py-2">放棄編輯</button></div>
+                            <div id="editControls" class="hidden space-y-3"><button type="submit" class="w-full py-4 bg-blue-900 text-white rounded-2xl font-black text-sm uppercase italic shadow-lg">Update Sync</button><div class="grid grid-cols-2 gap-2"><button type="button" onclick="completeTask()" class="py-4 bg-green-500 text-white rounded-2xl font-black text-xs uppercase">完工</button><button type="button" onclick="cancelTask()" class="py-4 bg-red-500 text-white rounded-2xl font-black text-xs uppercase">DC取消</button></div><button type="button" onclick="resetForm()" class="w-full text-[10px] text-slate-400 font-bold uppercase py-2">放棄編輯</button></div>
                         </form>
                     </div>
                 </div>
