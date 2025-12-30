@@ -101,18 +101,49 @@
     }
 }
 
-/* 📱 手機版：導覽列 z-index 必須最高，確保它是第一層 */
+/* 🟢 修正：強制手機版導覽列(第一層)鎖死在最頂端 */
+/* --------------------------------------------------------- */
+/* 🎯 修正手機版雙層凍結：強力膠水版 */
+/* --------------------------------------------------------- */
 @media (max-width: 1023px) {
-    .mobile-grid-nav { 
-        position: sticky !important; 
-        top: 0 !important; 
-        z-index: 100 !important; 
-        height: 60px; 
-        background: white; 
+    /* 1. 讓 body 騰出空間，防止第一列遮住內容 */
+    body { 
+        padding-top: 60px !important; 
     }
-}
 
-         
+    /* 2. 第一層導覽列：強制固定在最頂端 (Fixed) */
+    .mobile-grid-nav { 
+        display: flex !important; 
+        position: fixed !important; /* 🟡 改用 fixed，跳出 aside 的限制 */
+        top: 0 !important; 
+        left: 0 !important;
+        width: 100% !important;
+        z-index: 1000 !important; /* 最高層級 */
+        height: 60px !important; 
+        padding: 8px !important; 
+        gap: 8px !important; 
+        background: white !important; 
+        border-bottom: 1px solid #e2e8f0 !important; 
+    }
+
+    /* 3. 第一層按鈕稍微縮小以適應高度 */
+    .nav-box { 
+        flex: 1 !important; 
+        padding: 10px 0 !important; 
+        font-size: 13px !important; 
+    }
+
+    /* 4. 第二層控制列：吸附在第一層 (60px) 的下方 */
+    .sticky-header {
+        position: sticky !important;
+        top: 60px !important; /* 🟡 剛好接在第一層下面 */
+        z-index: 900 !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        margin-top: 0 !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+}  
 
         /* 字體大小校準 */
         .id-text { font-size: 1.1rem; font-weight: 800; italic; color: #334155; font-family: 'JetBrains Mono', monospace; }
