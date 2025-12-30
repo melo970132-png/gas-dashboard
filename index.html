@@ -22,7 +22,7 @@
         .page-content { display: none !important; }
         .page-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        /* 🟢 清單模式深度優化 (v6.3.1 緊湊 + 手機防崩潰版) */
+/* 🟢 清單模式深度優化 (v6.3.2 最終精確版) */
         #monitor-list-view {
             display: none; width: 100%; background: white;
             border-radius: 1.5rem; border: 1px solid #e2e8f0;
@@ -30,7 +30,7 @@
         }
         .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
-        /* --- 🖥️ 電腦版：緊湊、小字、淡底色 --- */
+        /* --- 🖥️ 電腦版維持精準緊湊 --- */
         .col-gas { width: 10%; padding-left: 20px !important; }
         .col-psi { width: 15%; text-align: right !important; padding-right: 20px !important; }
         .col-info { width: 55%; }
@@ -39,56 +39,59 @@
         .list-table th {
             background: #f1f5f9; padding: 12px 10px; text-align: left;
             font-size: 11px; font-weight: 900; color: #64748b;
-            border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0; text-transform: uppercase;
         }
         .list-row {
             border-bottom: 1px solid #e2e8f0;
-            height: 54px; /* 緊湊高度 */
+            height: 52px; /* 電腦版維持極致緊湊 */
             background-color: #f8fafc; /* 淡淡的底色 */
             transition: all 0.15s; cursor: pointer;
         }
         .list-row:hover { background: #edf7ff; }
 
-        /* 電腦版字體縮小 */
+        /* 字體大小校準 */
         .id-text { font-size: 1.1rem; font-weight: 800; italic; color: #334155; font-family: 'JetBrains Mono', monospace; }
-        .psi-text { font-size: 1.3rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+        .psi-text { font-size: 1.35rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
         .location-text { font-size: 0.95rem; font-weight: 700; color: #475569; }
         
         .reason-badge {
-            display: inline-flex; align-items: center; padding: 3px 8px;
-            border-radius: 6px; font-size: 10px; font-weight: 900;
-            margin-left: 8px; text-transform: uppercase; white-space: nowrap;
+            display: inline-flex; align-items: center; padding: 2px 8px;
+            border-radius: 5px; font-size: 10px; font-weight: 900;
+            margin-left: 6px; text-transform: uppercase; white-space: nowrap;
         }
         .bg-wait { background: #fecaca; color: #dc2626; }
         .bg-standby { background: #bfdbfe; color: #1d4ed8; }
         .bg-finish { background: #e2e8f0; color: #64748b; }
         .bg-confirm { background: #fde68a; color: #b45309; }
 
-        /* 📱 手機版：響應式 Grid 佈局 (防止畫面崩潰) */
+        /* 📱 手機版：高密度二列排版 (救回清單感) */
         @media (max-width: 767px) {
             .list-table thead { display: none; }
             .list-table tr.list-row {
                 display: grid;
-                grid-template-columns: 1fr auto;
-                grid-template-rows: auto auto auto;
+                grid-template-columns: 1fr auto; /* 左：ID/地點，右：PSI/日期 */
+                grid-template-rows: auto auto; /* 嚴格限制兩行 */
                 height: auto !important;
-                padding: 16px 20px !important;
-                background: white !important; /* 手機版用白底更清晰 */
-                border-bottom: 4px solid #f1f5f9;
+                padding: 10px 16px !important; /* 更緊湊的內距 */
+                background-color: #f8fafc !important; /* 手機版同步淡底色 */
+                border-bottom: 1px solid #e2e8f0;
+                gap: 2px 0;
             }
             .list-table td { display: block; width: 100% !important; padding: 0 !important; border: none; }
-            .col-gas  { grid-row: 1; grid-column: 1; }
-            .col-psi  { grid-row: 1; grid-column: 2; text-align: right !important; }
-            .col-info { grid-row: 2; grid-column: 1 / span 2; margin-top: 6px; }
-            .col-date { grid-row: 3; grid-column: 1 / span 2; text-align: left !important; margin-top: 10px; }
             
-            /* 手機版字體適度放大，方便觸控 */
-            .id-text { font-size: 1.4rem; }
-            .psi-text { font-size: 1.6rem; }
-            .location-text { font-size: 1.1rem; display: block; margin-bottom: 4px; }
+            /* 行位置鎖定 */
+            .col-gas  { grid-row: 1; grid-column: 1; align-self: flex-end; }
+            .col-psi  { grid-row: 1; grid-column: 2; text-align: right !important; align-self: flex-end; }
+            .col-info { grid-row: 2; grid-column: 1; align-self: flex-start; }
+            .col-date { grid-row: 2; grid-column: 2; text-align: right !important; align-self: flex-start; }
+            
+            /* 手機字體微調：縮小次要資訊 */
+            .id-text { font-size: 1.15rem; }
+            .psi-text { font-size: 1.3rem; }
+            .location-text { font-size: 0.85rem; max-width: 160px; display: inline-block; }
+            .reason-badge { padding: 1px 5px; font-size: 9px; margin-left: 4px; vertical-align: middle; }
         }
 
-        /* 💡 閃爍動畫引擎 */
         @keyframes blink { 50% { opacity: 0.5; } }
         #schedule-drawer { transition: transform 0.3s ease-in-out; }
         .drawer-open { transform: translateX(0) !important; }
@@ -255,13 +258,12 @@
         }).join(''); safeLucide();
     }
 
-  function renderListView() {
+function renderListView() {
     const tbody = document.getElementById('list-body');
     let data = getFilteredAndSortedData();
     
     tbody.innerHTML = data.map(item => {
         const isLow = item.gas.toLowerCase().startsWith('he') ? item.pressure < 3000 : item.pressure < 4000;
-        // 使用 Tailwind 的 animate-pulse 或自定義閃爍動畫
         const psiClass = isLow ? 'text-red-500 animate-pulse' : 'text-slate-900';
         
         let badgeClass = "bg-finish";
@@ -270,24 +272,24 @@
         else if (item.reason.includes("確認")) badgeClass = "bg-confirm";
 
         const hasDate = item.standbyDate && item.standbyDate !== "" && item.standbyDate !== "無";
-        const dateStyle = hasDate ? "text-blue-600 font-black" : "text-slate-400 font-bold";
-        const datePrefix = window.innerWidth < 768 ? '<span class="text-slate-400 font-black mr-2 text-[10px] uppercase">Standby:</span>' : '';
+        
+        // 🟢 手機版：移除冗長的 "STANDBY:" 前綴，直接顯示日期以節省空間
+        const dateStyle = hasDate ? "text-blue-600 font-black text-[12px] md:text-base" : "text-slate-300 font-bold text-[11px] md:text-sm";
 
         return `
         <tr class="list-row" onclick="showMonitorDetail('${item.gas}')">
             <td class="col-gas"><span class="id-text italic">${item.gas}</span></td>
             <td class="col-psi"><span class="psi-text ${psiClass}">${item.pressure.toLocaleString()}</span></td>
             <td class="col-info">
-                <div class="flex flex-col md:flex-row md:items-center">
+                <div class="flex items-center">
                     <span class="location-text truncate">${item.location || '🏢 倉庫'}</span>
-                    <span class="reason-badge ${badgeClass} w-fit">${item.reason}</span>
+                    <span class="reason-badge ${badgeClass}">${item.reason}</span>
                 </div>
             </td>
-            <td class="col-date ${dateStyle} text-[13px] md:text-base">${datePrefix}${hasDate ? item.standbyDate : '-'}</td>
+            <td class="col-date ${dateStyle}">${hasDate ? item.standbyDate : '-'}</td>
         </tr>`;
     }).join('');
 }
-
     function toggleViewCycle() { currentView = (currentView === 'card') ? 'list' : 'card'; localStorage.setItem('gas_last_view', currentView); renderMonitorMain(); updateViewButtonUI(); safeLucide(); }
     function updateViewButtonUI() {
         const btn = document.getElementById('viewToggleBtn'); const iconEl = document.getElementById('viewToggleIcon'); const textEl = document.getElementById('viewToggleText');
