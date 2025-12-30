@@ -22,15 +22,42 @@
         .page-content { display: none !important; }
         .page-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #monitor-list-view { display: none; width: 100%; background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; overflow: hidden; }
-        .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
-        .list-table th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 900; color: #64748b; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
-        .list-row { border-bottom: 1px solid #f1f5f9; height: 52px; transition: background 0.2s; cursor: pointer; }
-        .list-row:hover { background: #f0f7ff; }
-        .col-gas { width: 75px; font-family: 'JetBrains Mono', monospace; font-weight: 800; padding-left: 15px; }
-        .col-psi { width: 95px; font-weight: 900; text-align: right; padding-right: 15px; }
-        .col-info { width: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .psi-low { color: #ef4444; animation: blink 1.5s infinite; }
+        /* 🟢 清單模式深度優化 */
+        #monitor-list-view { 
+            display: none; width: 100%; background: white; 
+            border-radius: 2rem; border: 1px solid #e2e8f0; 
+            overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        
+        /* 重新分配欄位寬度：ID(10%)、PSI(15%)、位置原因(55%)、備刀(20%) */
+        .col-gas { width: 12%; padding-left: 25px !important; }
+        .col-psi { width: 18%; text-align: right !important; padding-right: 30px !important; }
+        .col-info { width: 50%; }
+        .col-date { width: 20%; text-align: center !important; }
+
+        .list-table th { 
+            background: #f8fafc; padding: 20px 10px; text-align: left; 
+            font-size: 12px; font-weight: 900; color: #94a3b8; 
+            border-bottom: 2px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .list-row { border-bottom: 1px solid #f8fafc; height: 72px; transition: all 0.2s; cursor: pointer; }
+        .list-row:hover { background: #f0f7ff; transform: scale(1.002); }
+
+        /* 🟢 字體大小調整 */
+        .id-text { font-size: 1.25rem; font-weight: 800; italic; color: #1e293b; font-family: 'JetBrains Mono', monospace; }
+        .psi-text { font-size: 1.5rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+        
+        /* 🟢 原因標籤樣式 */
+        .reason-badge {
+            display: inline-flex; align-items: center; padding: 4px 12px; 
+            border-radius: 8px; font-size: 11px; font-weight: 900; 
+            margin-left: 12px; text-transform: uppercase;
+        }
+        .bg-wait { background: #fee2e2; color: #ef4444; } /* 待灌氣 - 紅 */
+        .bg-standby { background: #dbeafe; color: #2563eb; } /* 備刀 - 藍 */
+        .bg-finish { background: #f1f5f9; color: #64748b; } /* 下刀 - 灰 */
+        .bg-confirm { background: #fef3c7; color: #d97706; } /* 氣體確認 - 橘 */
         @keyframes blink { 50% { opacity: 0.5; } }
         #schedule-drawer { transition: transform 0.3s ease-in-out; }
         .drawer-open { transform: translateX(0) !important; }
@@ -197,17 +224,39 @@
         }).join(''); safeLucide();
     }
 
-    function renderListView() {
-        const tbody = document.getElementById('list-body'); let data = getFilteredAndSortedData();
-        tbody.innerHTML = data.map(item => {
-            const isLow = item.gas.toLowerCase().startsWith('he') ? item.pressure < 3000 : item.pressure < 4000;
-            const psiClass = isLow ? 'psi-low' : (item.pressure > 5500 ? 'psi-vhigh' : '');
-            // 🟢 備刀日期變藍邏輯
-            const hasDate = item.standbyDate && item.standbyDate !== "" && item.standbyDate !== "無";
-            const dateStyle = hasDate ? "text-blue-600 font-black" : "text-slate-300 font-medium";
-            return `<tr class="list-row" onclick="showMonitorDetail('${item.gas}')"><td class="col-gas italic text-slate-900">${item.gas}</td><td class="col-psi font-mono italic ${psiClass}">${item.pressure.toLocaleString()}</td><td class="col-info"><div class="flex flex-col"><span class="font-bold text-slate-800 truncate">${item.location || '倉庫'}</span><span class="text-[10px] text-blue-600 font-black tracking-tighter uppercase leading-none">${item.reason}</span></div></td><td class="col-date ${dateStyle}">${hasDate ? item.standbyDate : '-'}</td></tr>`;
-        }).join('');
-    }
+  function renderListView() {
+    const tbody = document.getElementById('list-body');
+    let data = getFilteredAndSortedData();
+    
+    tbody.innerHTML = data.map(item => {
+        // 1. 警告邏輯
+        const isLow = item.gas.toLowerCase().startsWith('he') ? item.pressure < 3000 : item.pressure < 4000;
+        const psiClass = isLow ? 'text-red-500 animate-pulse' : 'text-slate-900';
+        
+        // 2. 原因標籤邏輯
+        let badgeClass = "bg-finish";
+        if (item.reason.includes("待灌氣")) badgeClass = "bg-wait";
+        else if (item.reason.includes("備刀")) badgeClass = "bg-standby";
+        else if (item.reason.includes("確認")) badgeClass = "bg-confirm";
+
+        // 3. 備刀日期樣式
+        const hasDate = item.standbyDate && item.standbyDate !== "" && item.standbyDate !== "無";
+        const dateStyle = hasDate ? "text-blue-600 font-black text-base" : "text-slate-300 font-medium text-sm";
+
+        return `
+        <tr class="list-row" onclick="showMonitorDetail('${item.gas}')">
+            <td class="col-gas"><span class="id-text italic">${item.gas}</span></td>
+            <td class="col-psi"><span class="psi-text ${psiClass}">${item.pressure.toLocaleString()}</span></td>
+            <td class="col-info">
+                <div class="flex items-center">
+                    <span class="text-lg font-bold text-slate-800">${item.location || '🏢 倉庫'}</span>
+                    <span class="reason-badge ${badgeClass}">${item.reason}</span>
+                </div>
+            </td>
+            <td class="col-date ${dateStyle}">${hasDate ? item.standbyDate : '-'}</td>
+        </tr>`;
+    }).join('');
+}
 
     function toggleViewCycle() { currentView = (currentView === 'card') ? 'list' : 'card'; localStorage.setItem('gas_last_view', currentView); renderMonitorMain(); updateViewButtonUI(); safeLucide(); }
     function updateViewButtonUI() {
