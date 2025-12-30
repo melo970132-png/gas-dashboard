@@ -89,15 +89,24 @@
     border-bottom: 1px solid #f1f5f9;
 }
 
-/* 🖥️ 電腦版：消除 padding-top，讓標題完全貼頂 */
+/* 🖥️ 桌機版：精準貼頂，消除「聳肩」空隙 */
 @media (min-width: 1024px) {
     .sticky-header { 
         top: 0; 
-        padding-top: 10px; /* 🟢 縮小肩膀間距，更精準 */
-        padding-bottom: 15px;
-        margin-left: -20px; /* 配合容器補償 */
-        padding-left: 20px;
-        width: calc(100% + 20px);
+        /* 🟡 關鍵：使用負邊距抵銷父層 main 的 lg:p-10 (40px) */
+        margin-top: -2.5rem !important; 
+        padding-top: 2.5rem !important; 
+        padding-bottom: 1.5rem !important;
+        
+        /* 🟡 讓背景左右貼滿，消除視覺斷層 */
+        margin-left: -2.5rem !important;
+        margin-right: -2.5rem !important;
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+        
+        width: auto !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03); /* 加上淡淡陰影，增加吸附感 */
     }
 }
 
