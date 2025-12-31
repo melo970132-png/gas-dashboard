@@ -13,23 +13,89 @@
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: var(--bg-light); color: #1e293b; min-height: 100vh; margin: 0; padding: 0; }
         .glass-card-ar { background: rgba(224, 242, 254, 0.95); backdrop-filter: blur(12px); border: 2px solid #bae6fd; }
         .glass-card-he { background: rgba(245, 243, 255, 0.95); backdrop-filter: blur(12px); border: 2px solid #ddd6fe; }
-       @media (max-width: 1023px) {
-    .mobile-grid-nav { display: flex !important; position: sticky; top: 0; z-index: 100; padding: 10px; gap: 8px; background: white; border-bottom: 1px solid #e2e8f0; }
-    .nav-box { flex: 1 !important; text-align: center; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 0; font-size: 14px; font-weight: 900; color: #64748b; background: #f1f5f9; }
-    .nav-box-active { background: #2563eb !important; color: white !important; border-color: #2563eb !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+       /* ========================================== */
+/* 📱 手機版專屬 (Media Query) */
+/* ========================================== */
+@media (max-width: 1023px) {
+    .mobile-grid-nav { 
+        display: flex !important; 
+        position: sticky; 
+        top: 0; 
+        z-index: 1000; /* 導覽列層級 */
+        padding: 10px; 
+        gap: 8px; 
+        background: white; 
+        border-bottom: 1px solid #e2e8f0; 
+    }
+    .nav-box { 
+        flex: 1 !important; 
+        text-align: center; 
+        border: 1px solid #cbd5e1; 
+        border-radius: 12px; 
+        padding: 12px 0; 
+        font-size: 14px; 
+        font-weight: 900; 
+        color: #64748b; 
+        background: #f1f5f9; 
+    }
+    .nav-box-active { 
+        background: #2563eb !important; 
+        color: white !important; 
+        border-color: #2563eb !important; 
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); 
+    }
 
-    /* 🎯 這裡就是我們要補上的「抽屜權重」修正 */
+    /* 🎯 修正抽屜：確保權重最高且不影響平日操作 */
     #drawer, .drawer-content { 
-        z-index: 2000 !important; 
+        z-index: 5000 !important; 
     }
+
+    /* 🌫️ 修正霧化遮罩：預設必須徹底隱藏，否則畫面會糊掉 */
     #drawer-overlay, .drawer-overlay { 
-        z-index: 1900 !important; 
+        z-index: 4900 !important; 
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(4px) !important;
+        opacity: 0;             /* 預設透明 */
+        pointer-events: none;   /* 預設點不到，不干擾畫面 */
+        transition: opacity 0.3s;
     }
+
+    /* 當抽屜打開時，才顯示遮罩 (這需要 JS 聯動，或檢查你的抽屜顯示邏輯) */
+    /* 如果你的抽屜是透過更改 style 顯示，這行確保它被蓋過時才模糊 */
+} 
+/* 👈 這裡是手機版的結界，必須在這裡關上 */
+
+/* ========================================== */
+/* 💻 電腦版與全局通用樣式 */
+/* ========================================== */
+
+/* 🎯 恢復標題凍結：強制定案 */
+.sticky-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 900 !important; /* 低於手機導覽列，但高於內容卡片 */
+    background: white !important;
 }
-        .desktop-nav-active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        .page-content { display: none !important; }
-        .page-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.desktop-nav-active { 
+    background: #2563eb !important; 
+    color: white !important; 
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); 
+}
+
+.page-content { display: none !important; }
+
+.page-active { 
+    display: flex !important; 
+    animation: fadeIn 0.2s ease-out; 
+}
+
+@keyframes fadeIn { 
+    from { opacity: 0; } 
+    to { opacity: 1; } 
+}
         #monitor-list-view { display: none; width: 100%; background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; overflow: hidden; }
         .list-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
         .list-table th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 900; color: #64748b; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
