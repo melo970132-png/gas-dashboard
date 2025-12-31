@@ -363,7 +363,7 @@
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbySleigCXTqewRyUAjNOW35tCyp1WqNxN1ZWPXNPKnXY1kNJODXJYdHQeQlc38c65ZQsg/exec'; 
 
     const USERS = ["杜孟擇", "張家榮"];
-    const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院","台大癌醫", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
+    const HOSPITALS = ["三軍總醫院", "國立臺灣大學醫學院附設醫院", "長庚醫療財團法人林口長庚紀念醫院", "國泰綜合醫院", "醫療財團法人羅許基金會羅東博愛醫院", "新竹臺大分院新竹醫院", "佛教慈濟醫療財團法人台北慈濟醫院", "基隆長庚紀念醫院", "汐止國泰綜合醫院", "新光醫療財團法人新光吳火獅紀念醫院", "佛教慈濟醫療財團法人花蓮慈濟醫院", "臺北榮總醫院", "衛生福利部雙和醫院", "天主教輔仁大學附設醫院", "新竹國泰綜合醫院", "淡水馬偕紀念醫院", "學術會"];
     
     let latestMonitorData = []; let historicalRows = []; let localSchedules = []; 
     let currentMonitorFilter = localStorage.getItem('gas_last_region') || 'ALL'; 
@@ -633,14 +633,46 @@ function renderDrawerSchedules() {
     </div>`;
 }
 
-    function updateAnalysisRegion(region) {
-        document.querySelectorAll('.ana-reg-btn').forEach(btn => btn.className = btn.innerText.includes(region) ? "ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md" : "ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200");
-        const counts = {}; let aT=0, aC=0, hT=0, hC=0;
-        historicalRows.forEach(row => { if (row[3] === region) { if (row[0].includes("2026") && row[5]) counts[row[5]] = (counts[row[5]] || 0) + 1; if (row[6] === "待灌氣") { const p = parseInt(row[7]) || 0; if (row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } else { hT += p; hC++; } } } });
-        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-        document.getElementById('ana-hospital-list').innerHTML = sorted.length > 0 ? sorted.map(([n, c]) => `<div class="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-200"><span class="font-black text-slate-800 text-lg">${n}</span><span class="bg-blue-600 text-white px-5 py-1.5 rounded-full text-xs font-black italic">${c} VISITS</span></div>`).join('') : '<p class="text-slate-400 text-center py-16 italic">尚無 2026 年度數據</p>';
-        document.getElementById('ana-ar-psi').innerText = aC > 0 ? Math.round(aT/aC) : "--"; document.getElementById('ana-he-psi').innerText = hC > 0 ? Math.round(hT/hC) : "--";
-    }
+  function updateAnalysisRegion(region) {
+    // 1. 維持你原本的按鈕樣式切換邏輯
+    document.querySelectorAll('.ana-reg-btn').forEach(btn => btn.className = btn.innerText.includes(region) ? "ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md" : "ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200");
+    
+    // 2. 初始化統計變數 (新增 seenSurgeries 用於去重)
+    const counts = {}; 
+    let aT = 0, aC = 0, hT = 0, hC = 0;
+    const seenSurgeries = new Set(); // 🟢 用來記錄「日期+醫院」，確保一次任務只算一筆
+
+    historicalRows.forEach(row => { 
+        if (row[3] === region) { 
+            // A. 2026年備刀次數統計 (使用「日期+醫院」去重邏輯)
+            // row[4] 是日期，row[5] 是醫院，row[6] 是事由
+            if (row[4] && row[4].includes("2026") && row[6] && row[6].includes("備刀")) {
+                const surgeryKey = row[4] + row[5]; // 建立「日期+醫院」的唯一識別標籤
+                if (!seenSurgeries.has(surgeryKey)) {
+                    if (row[5]) {
+                        counts[row[5]] = (counts[row[5]] || 0) + 1;
+                    }
+                    seenSurgeries.add(surgeryKey); // 標記這場任務已算過
+                }
+            }
+
+            // B. 維持你原本的平均壓力統計邏輯 (只統計「待灌氣」的壓力)
+            if (row[6] === "待灌氣") { 
+                const p = parseInt(row[7]) || 0; 
+                if (row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } 
+                else { hT += p; hC++; } 
+            } 
+        } 
+    });
+
+    // 3. 維持你原本的 HTML 渲染邏輯與樣式
+    const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+    document.getElementById('ana-hospital-list').innerHTML = sorted.length > 0 ? sorted.map(([n, c]) => `<div class="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-200"><span class="font-black text-slate-800 text-lg">${n}</span><span class="bg-blue-600 text-white px-5 py-1.5 rounded-full text-xs font-black italic">${c} VISITS</span></div>`).join('') : '<p class="text-slate-400 text-center py-16 italic">尚無 2026 年度數據</p>';
+    
+    // 4. 維持你原本的平均壓力數值顯示
+    document.getElementById('ana-ar-psi').innerText = aC > 0 ? Math.round(aT/aC) : "--"; 
+    document.getElementById('ana-he-psi').innerText = hC > 0 ? Math.round(hT/hC) : "--";
+}
 
     async function preLoadHistoricalData() { const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:H3000?key=${API_KEY}`; try { const res = await fetch(url); const data = await res.json(); historicalRows = data.values || []; } catch (e) { console.error(e); } }
    function initForms() {
