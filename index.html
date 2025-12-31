@@ -227,7 +227,23 @@
         .date-container { position: relative; overflow: hidden; border-radius: 0.75rem; }
         input[type="date"] { position: relative; z-index: 10; cursor: pointer; width: 100%; }
         input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0; cursor: pointer; opacity: 0; z-index: 20; }
-    </style>
+    /* 🎯 手機版抽屜權限精密修正 */
+@media (max-width: 1023px) {
+    /* 1. 只把抽屜推到最前面 */
+    #schedule-drawer { 
+        z-index: 5000 !important; 
+    }
+    
+    /* 2. 把遮罩也推到標題前面，但比抽屜後退一點 */
+    #drawer-overlay, .drawer-overlay { 
+        z-index: 4900 !important; 
+        /* 確保它現在是看得見且點得到的 */
+        opacity: 0.5 !important;
+        background-color: black !important;
+        pointer-events: auto !important;
+    }
+}
+  </style>
 </head>
 <body class="flex flex-col lg:flex-row overflow-x-hidden">
     <aside class="lg:w-64 w-full bg-white lg:border-r border-slate-200 flex flex-col z-[100] shadow-sm lg:h-screen lg:sticky lg:top-0">
@@ -404,7 +420,7 @@ function renderListView() {
     let data = getFilteredAndSortedData();
     
     tbody.innerHTML = data.map(item => {
-        const isLow = item.gas.toLowerCase().startsWith('he') ? item.pressure < 3000 : item.pressure < 4000;
+        const isLow = item.gas.toLowerCase().startsWith('he') ? item.pressure < 3001 : item.pressure < 4001;
         const psiClass = isLow ? 'text-red-500 animate-pulse' : 'text-slate-900';
         
         let badgeClass = "bg-finish";
@@ -508,7 +524,7 @@ function renderDrawerSchedules() {
         const history = historicalRows.filter(r => r[2] === gasName).slice(-5).reverse();
         let historyHtml = history.map(h => {
             const hP = parseInt(h[7]) || 0;
-            const hLow = h[2].toLowerCase().startsWith('he') ? hP < 3000 : hP < 4000;
+            const hLow = h[2].toLowerCase().startsWith('he') ? hP < 3001 : hP < 4001;
             return `<div class="flex justify-between items-center py-4 border-b border-slate-100 last:border-0"><div class="text-xs leading-tight"><p class="font-black text-slate-900 text-base mb-1.5 uppercase tracking-tighter">${h[6]} @ ${h[5]}</p><div class="flex gap-3 text-[11px] text-slate-500 font-bold italic uppercase"><span>BY: ${h[1]}</span><span>| ${h[0]}</span></div></div><div class="text-2xl font-mono font-black ${hLow ? 'text-red-500' : 'text-blue-600'} italic leading-none">${hP.toLocaleString()} <span class="text-xs font-sans">PSI</span></div></div>`;
         }).join('');
         document.getElementById('monitor-modal-content').innerHTML = `<div class="flex flex-col md:flex-row gap-10"><div class="md:w-[30%] border-b md:border-b-0 md:border-r border-slate-100 pb-8 md:pb-0 md:pr-10"><h2 class="text-5xl lg:text-7xl font-black text-slate-950 italic mb-8 uppercase">${item.gas}</h2><div class="bg-blue-50 p-6 rounded-[2.5rem] shadow-inner mb-8"><p class="text-xs text-slate-500 font-black uppercase mb-2">當前壓力</p><div class="flex items-baseline gap-2"><span class="text-6xl font-black italic">${item.pressure.toLocaleString()}</span><span class="text-base font-bold text-slate-400">PSI</span></div></div><div class="px-3"><p class="text-xs text-slate-500 font-black uppercase mb-2">用途</p><p class="text-blue-800 font-black text-3xl italic uppercase">${item.reason}</p></div></div><div class="flex-1"><h3 class="text-[13px] font-black text-slate-400 uppercase mb-5 tracking-widest italic flex items-center gap-3">📜 最近 5 筆歷史異動</h3>${historyHtml || '<p class="text-sm text-slate-300">尚無異動數據</p>'}</div></div><button onclick="closeMonitorModal()" class="w-full mt-10 py-5 bg-slate-950 text-white rounded-2xl font-black text-lg tracking-[0.5em] uppercase shadow-xl transition-all active:scale-95">CLOSE</button>`;
