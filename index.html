@@ -324,7 +324,18 @@
                         <h3 id="formTitle" class="text-2xl font-black mb-6 text-blue-600 italic leading-none">Add Task</h3>
                         <form id="surgeryForm" class="space-y-4">
                             <input type="hidden" id="editId">
-                            <div><label class="text-[10px] font-black text-slate-400 block mb-1 uppercase tracking-widest">負責人</label><select id="userName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-base outline-none"></select></div>
+                            <div class="grid grid-cols-2 gap-3 mb-1">
+    <div>
+        <label class="text-[10px] font-black text-slate-400 block mb-1 uppercase tracking-widest">負責人</label>
+        <select id="userName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-base outline-none">
+            </select>
+    </div>
+    
+    <div>
+        <label class="text-[10px] font-black text-slate-400 block mb-1 uppercase tracking-widest">台數 (N)</label>
+        <input type="number" id="taskCases" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-base outline-none text-center">
+    </div>
+</div>
                             <div class="grid grid-cols-2 gap-3"><div class="date-container"><label class="text-[10px] font-black text-slate-400 block mb-1 uppercase tracking-widest">日期</label><input type="date" id="surgeryDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold outline-none"></div><div><label class="text-[10px] font-black text-slate-400 block mb-1 uppercase tracking-widest">星期</label><div id="weekdayDisplay" class="py-3 bg-blue-50 text-blue-700 font-black rounded-xl text-center text-base italic">--</div></div></div>
                             <div><label class="text-[10px] font-black text-slate-400 block mb-1 uppercase tracking-widest">目標醫院</label><select id="hospitalName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-base outline-none"></select></div>
                             <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
@@ -593,12 +604,13 @@ function expandAnalysisHistory(btn) {
         document.getElementById('ar1Gas').value = item.ar1; document.getElementById('ar2Gas').value = item.ar2 || '無'; document.getElementById('ar3Gas').value = item.ar3 || '無';
         document.getElementById('weekdayDisplay').innerText = item.weekday || '--';
         document.getElementById('formTitle').innerText = "Edit Task"; document.getElementById('submitBtn').classList.add('hidden'); document.getElementById('editControls').classList.remove('hidden');
+        document.getElementById('taskCases').value = item.cases || 1;
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     async function completeTask() { if(!confirm("完工？")) return; const id = document.getElementById('editId').value; const item = localSchedules.find(s => s.id.toString() === id); item.status = 'done'; await saveToCloud(item); loadSchedulesFromCloud(); resetForm(); }
     async function cancelTask() { if(!confirm("取消？")) return; const id = document.getElementById('editId').value; const item = localSchedules.find(s => s.id.toString() === id); item.status = 'cancelled'; await saveToCloud(item); loadSchedulesFromCloud(); resetForm(); }
-    function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Task"; document.getElementById('submitBtn').classList.remove('hidden'); document.getElementById('editControls').classList.add('hidden'); document.getElementById('weekdayDisplay').innerText='--'; }
+    function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Task"; document.getElementById('submitBtn').classList.remove('hidden'); document.getElementById('editControls').classList.add('hidden'); document.getElementById('weekdayDisplay').innerText='--';document.getElementById('taskCases').value = 1; }
     async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出"); return true; } catch (e) { return false; } }
 
    async function loadSchedulesFromCloud() {
@@ -777,7 +789,7 @@ document.getElementById('ana-hospital-list').innerHTML = sorted.length > 0 ? sor
             weekday: document.getElementById('weekdayDisplay').innerText,        // C: 星期
             hospital: document.getElementById('hospitalName').value,             // D: 醫院
             user: document.getElementById('userName').value,                     // E: 負責人
-            cases: "1",                                                          // F: 台數
+            cases: document.getElementById('taskCases').value,                   // F: 台數
             he: document.getElementById('heGas').value,                           // G: He (He1)
             he2: document.getElementById('he2Gas').value,                         // H: He2
             ar1: document.getElementById('ar1Gas').value,                        // I: Ar1
