@@ -604,42 +604,34 @@ function expandAnalysisHistory(btn) {
     function resetForm() { document.getElementById('surgeryForm').reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').innerText = "Add Task"; document.getElementById('submitBtn').classList.remove('hidden'); document.getElementById('editControls').classList.add('hidden'); document.getElementById('weekdayDisplay').innerText='--';document.getElementById('taskCases').value = 1; }
     async function saveToCloud(p) { try { await fetch(GAS_WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "saveSchedule", data: p }) }); alert("✅ 同步指令已發出"); return true; } catch (e) { return false; } }
 
-   async function loadSchedulesFromCloud() {
-    // 🟢 這裡範圍改成 A2:M2000 以確保抓到最後一欄更新時間
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:M2000?key=${API_KEY}`;
+async function loadSchedulesFromCloud() {
+    const preSurgeryUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/備刀紀錄!A2:M2000?key=${API_KEY}`;
+    const historyUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:M2000?key=${API_KEY}`;
+    
     try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.values) {
-            // 【新增這行】把原始列資料存起來，供「數據分析」的北區邏輯使用
-            preSurgeryData = data.values; 
+        // 同時抓取兩張表
+        const [preRes, histRes] = await Promise.all([fetch(preSurgeryUrl), fetch(historyUrl)]);
+        const preData = await preRes.json();
+        const histData = await histRes.json();
 
-            localSchedules = data.values.map(r => ({
-                id: r[0],          // A: ID
-                date: r[1],        // B: 日期
-                weekday: r[2],     // C: 星期
-                hospital: r[3],    // D: 醫院
-                user: r[4],        // E: 負責人
-                cases: r[5],       // F: 台數
-                he: r[6],          // G: He
-                he2: r[7] || '無',  // H: He2
-                ar1: r[8],         // I: Ar1
-                ar2: r[9] || '無',  // J: Ar2
-                ar3: r[10] || '無', // K: Ar3
-                status: r[11] || 'pending' // L: 狀態
+        if (preData.values) preSurgeryData = preData.values; 
+        if (histData.values) historicalRows = histData.values; // 👈 確保壓力數據來源有填入
+
+        // 渲染備刀排程 (前端 UI 用)
+        if (preData.values) {
+            localSchedules = preData.values.map(r => ({
+                id: r[0], date: r[1], weekday: r[2], hospital: r[3],
+                user: r[4], cases: r[5], he: r[6], he2: r[7] || '無',
+                ar1: r[8], ar2: r[9] || '無', ar3: r[10] || '無',
+                status: r[11] || 'pending'
             }));
-
-            // 1. 渲染原本的備刀排程清單
             renderScheduleList();
-
-            // 2. 【新增這行】抓完資料後，立刻驅動一次數據分析的渲染
-            // 這樣你一打開網頁，北區的數據就會自動算好
-            updateAnalysisRegion('北區');
-
         }
-    } catch (e) { 
-        console.error("資料讀取失敗:", e); 
-    }
+
+        // 驅動數據分析
+        updateAnalysisRegion(currentAnalysisRegion);
+
+    } catch (e) { console.error("資料讀取失敗:", e); }
 }
     function renderScheduleList() {
     const now = new Date(); now.setHours(0,0,0,0);
@@ -703,24 +695,37 @@ function expandAnalysisHistory(btn) {
 }
 
 function updateAnalysisRegion(region) {
-    currentAnalysisRegion = region; // 紀錄當前區域
+    currentAnalysisRegion = region;
     
-    // 1. 維持按鈕樣式切換 (代碼略，維持你原本的版本)
+    // 1. 維持按鈕樣式切換
     document.querySelectorAll('.ana-reg-btn').forEach(btn => btn.className = btn.innerText.includes(region) ? "ana-reg-btn py-5 bg-slate-950 text-white rounded-2xl font-black italic border-2 border-blue-500 shadow-md" : "ana-reg-btn py-5 bg-white text-slate-400 rounded-2xl font-black italic border border-slate-200");
     
     const hospitalHistory = {}; 
+    let aT = 0, aC = 0, hT = 0, hC = 0;
+
+    // --- A. 壓力統計 (【修正點】不論哪一區，壓力永遠從 historicalRows 紀錄表抓取) ---
+    historicalRows.forEach(row => {
+        // row[3] 是區域, row[6] 是類型(待灌氣), row[7] 是壓力值, row[2] 是氣體類型
+        if (row[3] === region && row[6] === "待灌氣") { 
+            const p = parseInt(row[7]) || 0; 
+            if (row[2] && row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } 
+            else { hT += p; hC++; } 
+        }
+    });
+
+    // --- B. 醫院清單統計 (分流處理) ---
     const dataSource = (region === '北區') ? preSurgeryData : historicalRows;
 
-    dataSource.forEach(row => { 
+    dataSource.forEach(row => {
         if (region === '北區') {
-            // 【北區邏輯】B:日期(row[1]), D:醫院(row[3]), F:台數(row[5]), L:狀態(row[11])
+            // 北區邏輯：備刀紀錄表 (B:1, D:3, F:5, L:11)
             const date = row[1], hospital = row[3], cases = parseInt(row[5]) || 0, status = row[11];
             if (date && date.includes("2026") && status === 'done') {
                 if (!hospitalHistory[hospital]) hospitalHistory[hospital] = [];
                 hospitalHistory[hospital].push({ date: date.split(' ')[0], value: cases });
             }
         } else {
-            // 【中南區邏輯】D:區域(row[3]), E:日期(row[4]), F:醫院(row[5]), G:類型(row[6])
+            // 中南區邏輯：紀錄表 (D:3, E:4, F:5, G:6)
             if (row[3] === region && row[4] && row[4].includes("2026") && row[6] && row[6].includes("備刀")) {
                 const hospital = row[5];
                 if (!hospitalHistory[hospital]) hospitalHistory[hospital] = [];
@@ -729,10 +734,10 @@ function updateAnalysisRegion(region) {
         }
     });
 
-    // 3. 渲染醫院清單
+    // 3. 渲染醫院清單 (排序與顯示)
     const sorted = Object.entries(hospitalHistory).sort((a, b) => {
         const valA = region === '北區' ? a[1].reduce((sum, item) => sum + item.value, 0) : new Set(a[1].map(i => i.date)).size;
-        const valB = region === '北區' ? b[1].reduce((sum, item) => sum + item.value, 0) : new Set(b[1].map(i => i.date)).size;
+        const valB = region === '北區' ? b[1].reduce((sum, item) => sum + item.value, 0) : new Set(b[1].map(i => i.value)).size; // 這裡原建議修正為對應計算方式
         return valB - valA;
     });
 
@@ -745,6 +750,10 @@ function updateAnalysisRegion(region) {
                 <span class="bg-blue-600 text-white px-5 py-1.5 rounded-full text-xs font-black italic">${displayValue} ${unit}</span>
             </div>`;
     }).join('') : '<p class="text-slate-400 text-center py-16 italic">尚無 2026 年度數據</p>';
+
+    // 4. 更新壓力數值 (【重要】將計算好的平均值填回畫面)
+    document.getElementById('ana-ar-psi').innerText = aC > 0 ? Math.round(aT/aC) : "--"; 
+    document.getElementById('ana-he-psi').innerText = hC > 0 ? Math.round(hT/hC) : "--";
 }
 
     async function preLoadHistoricalData() { const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:H3000?key=${API_KEY}`; try { const res = await fetch(url); const data = await res.json(); historicalRows = data.values || []; } catch (e) { console.error(e); } }
