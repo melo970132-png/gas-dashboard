@@ -381,6 +381,7 @@
     let isPressurePriority = false;
     let currentView = localStorage.getItem('gas_last_view') || 'card';
     let currentAnalysisRegion = '北區'; // 預設為北區
+    let preSurgeryData = []; // 宣告一個空的籃子來裝備刀紀錄
 
     function safeLucide() { if (window.lucide) window.lucide.createIcons(); }
 
@@ -610,6 +611,9 @@ function expandAnalysisHistory(btn) {
         const res = await fetch(url);
         const data = await res.json();
         if (data.values) {
+            // 【新增這行】把原始列資料存起來，供「數據分析」的北區邏輯使用
+            preSurgeryData = data.values; 
+
             localSchedules = data.values.map(r => ({
                 id: r[0],          // A: ID
                 date: r[1],        // B: 日期
@@ -622,13 +626,21 @@ function expandAnalysisHistory(btn) {
                 ar1: r[8],         // I: Ar1
                 ar2: r[9] || '無',  // J: Ar2
                 ar3: r[10] || '無', // K: Ar3
-                status: r[11] || 'pending' // L: 狀態 (賦予預設值防止 toUpperCase 錯誤)
+                status: r[11] || 'pending' // L: 狀態
             }));
-            renderScheduleList();
-        }
-    } catch (e) { console.error("資料讀取失敗:", e); }
-}
 
+            // 1. 渲染原本的備刀排程清單
+            renderScheduleList();
+
+            // 2. 【新增這行】抓完資料後，立刻驅動一次數據分析的渲染
+            // 這樣你一打開網頁，北區的數據就會自動算好
+            updateAnalysisRegion('北區');
+
+        }
+    } catch (e) { 
+        console.error("資料讀取失敗:", e); 
+    }
+}
     function renderScheduleList() {
     const now = new Date(); now.setHours(0,0,0,0);
     const grid = document.getElementById('scheduleGrid');
