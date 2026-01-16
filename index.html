@@ -721,10 +721,12 @@ function updateAnalysisRegion(region) {
     const hospitalHistory = {}; 
     let aT = 0, aC = 0, hT = 0, hC = 0;
 
-    // --- A. 壓力統計 (【修正點】不論哪一區，壓力永遠從 historicalRows 紀錄表抓取) ---
+    // --- A. 壓力統計 ---
     historicalRows.forEach(row => {
-        // row[3] 是區域, row[6] 是類型(待灌氣), row[7] 是壓力值, row[2] 是氣體類型
-        if (row[3] === region && row[6] === "灌氣") { 
+        // row[3] 是區域, row[6] 是類型, row[7] 是壓力值, row[2] 是氣體類型
+        
+        // 👇 修正點 1：改成 includes("灌氣")，讓平均數值能正確讀取到「待灌氣」與「已通知」
+        if (row[3] === region && row[6] && row[6].includes("灌氣")) { 
             const p = parseInt(row[7]) || 0; 
             if (row[2] && row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } 
             else { hT += p; hC++; } 
@@ -755,7 +757,10 @@ function updateAnalysisRegion(region) {
     // 3. 渲染醫院清單 (排序與顯示)
     const sorted = Object.entries(hospitalHistory).sort((a, b) => {
         const valA = region === '北區' ? a[1].reduce((sum, item) => sum + item.value, 0) : new Set(a[1].map(i => i.date)).size;
-        const valB = region === '北區' ? b[1].reduce((sum, item) => sum + item.value, 0) : new Set(b[1].map(i => i.value)).size; // 這裡原建議修正為對應計算方式
+        
+        // 👇 修正點 2：中南區排序依據改成 i.date (原本您寫成 i.value 會導致排序失效)
+        const valB = region === '北區' ? b[1].reduce((sum, item) => sum + item.value, 0) : new Set(b[1].map(i => i.date)).size; 
+        
         return valB - valA;
     });
 
@@ -769,11 +774,10 @@ function updateAnalysisRegion(region) {
             </div>`;
     }).join('') : '<p class="text-slate-400 text-center py-16 italic">尚無 2026 年度數據</p>';
 
-    // 4. 更新壓力數值 (【重要】將計算好的平均值填回畫面)
+    // 4. 更新壓力數值
     document.getElementById('ana-ar-psi').innerText = aC > 0 ? Math.round(aT/aC) : "--"; 
     document.getElementById('ana-he-psi').innerText = hC > 0 ? Math.round(hT/hC) : "--";
 }
-
     async function preLoadHistoricalData() { const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/紀錄!A2:H3000?key=${API_KEY}`; try { const res = await fetch(url); const data = await res.json(); historicalRows = data.values || []; } catch (e) { console.error(e); } }
    function initForms() {
     const uSel = document.getElementById('userName');
