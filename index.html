@@ -437,7 +437,7 @@ function renderListView() {
         const psiClass = isLow ? 'text-red-500 animate-pulse' : 'text-slate-900';
         
         let badgeClass = "bg-finish";
-        if (item.reason.includes("待灌氣")) badgeClass = "bg-wait";
+        if (item.reason.includes("灌氣")) badgeClass = "bg-wait";
         else if (item.reason.includes("備刀")) badgeClass = "bg-standby";
         else if (item.reason.includes("確認")) badgeClass = "bg-confirm";
 
@@ -706,7 +706,7 @@ function updateAnalysisRegion(region) {
     // --- A. 壓力統計 (【修正點】不論哪一區，壓力永遠從 historicalRows 紀錄表抓取) ---
     historicalRows.forEach(row => {
         // row[3] 是區域, row[6] 是類型(待灌氣), row[7] 是壓力值, row[2] 是氣體類型
-        if (row[3] === region && row[6] === "待灌氣") { 
+        if (row[3] === region && row[6] === "灌氣") { 
             const p = parseInt(row[7]) || 0; 
             if (row[2] && row[2].toLowerCase().startsWith("ar")) { aT += p; aC++; } 
             else { hT += p; hC++; } 
