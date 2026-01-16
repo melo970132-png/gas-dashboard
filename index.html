@@ -186,7 +186,12 @@
             margin-left: 6px; text-transform: uppercase; white-space: nowrap;
         }
         .bg-wait { background: #fecaca; color: #dc2626; }
-        .bg-standby { background: #bfdbfe; color: #1d4ed8; }
+        /* 修改後：清新的薄荷綠/翡翠綠，代表「準備就緒」 */
+.bg-standby { 
+    background-color: #d1fae5; /* 淺綠底 (Tailwind: emerald-100) */
+    color: #065f46;            /* 深綠字 (Tailwind: emerald-800) */
+    border: 1px solid #10b981; /* (選填) 加個細邊框增加精緻度 */
+}
         .bg-finish { background: #e2e8f0; color: #64748b; }
         .bg-confirm { background: #fde68a; color: #b45309; }
         .bg-notified {
