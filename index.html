@@ -189,6 +189,10 @@
         .bg-standby { background: #bfdbfe; color: #1d4ed8; }
         .bg-finish { background: #e2e8f0; color: #64748b; }
         .bg-confirm { background: #fde68a; color: #b45309; }
+        .bg-notified {
+    background-color: #3b82f6; /* 亮藍色 */
+    color: white;
+}
 
         /* 📱 手機版：高密度二列排版 (救回清單感) */
         @media (max-width: 767px) {
@@ -437,9 +441,23 @@ function renderListView() {
         const psiClass = isLow ? 'text-red-500 animate-pulse' : 'text-slate-900';
         
         let badgeClass = "bg-finish";
-        if (item.reason.includes("灌氣")) badgeClass = "bg-wait";
-        else if (item.reason.includes("備刀")) badgeClass = "bg-standby";
-        else if (item.reason.includes("確認")) badgeClass = "bg-confirm";
+
+// 1. 先判斷是否已通知 (優先級最高)
+if (item.reason.includes("已通知")) {
+    badgeClass = "bg-notified";
+}
+// 2. 如果沒通知，再看是不是待灌氣
+// 這裡必須加 else，才不會跟上面打架
+else if (item.reason.includes("灌氣")) { 
+    badgeClass = "bg-wait";
+}
+// 3. 其他狀態
+else if (item.reason.includes("備刀")) {
+    badgeClass = "bg-standby";
+}
+else if (item.reason.includes("確認")) {
+    badgeClass = "bg-confirm";
+}
 
         const hasDate = item.standbyDate && item.standbyDate !== "" && item.standbyDate !== "無";
         
