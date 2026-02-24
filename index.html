@@ -842,6 +842,16 @@ function updateAnalysisRegion(region) {
     function toggleHistory() { document.getElementById('historyList').classList.toggle('hidden'); document.getElementById('historyIcon').style.transform = document.getElementById('historyList').classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)'; }
     function closeMonitorModal() { document.getElementById('monitor-modal').classList.add('hidden'); }
     function switchPage(pageID) { document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); document.getElementById('page-' + pageID).classList.add('page-active'); document.querySelectorAll('.nav-box').forEach(btn => btn.classList.remove('nav-box-active', 'desktop-nav-active')); const activeBtn = document.getElementById('nav-' + pageID); activeBtn.classList.add('nav-box-active'); if (window.innerWidth >= 1024) activeBtn.classList.add('desktop-nav-active'); safeLucide(); window.scrollTo(0,0); }
+
+document.addEventListener("visibilitychange", () => {
+    // 檢查是否處於「加入主畫面」的獨立運作模式
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (document.visibilityState === 'visible' && isStandalone) {
+        window.location.reload();
+    }
+});
+
 </script>
 </body>
 </html>
