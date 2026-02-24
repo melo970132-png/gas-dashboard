@@ -839,7 +839,7 @@ function updateAnalysisRegion(region) {
         btn.innerText = "Confirm Sync";
     });
 }
-    // 1. 頁面切換與記憶功能
+    // 1. 頁面切換與分頁記憶功能
     function switchPage(pageID) { 
         document.querySelectorAll('.page-content').forEach(el => el.classList.remove('page-active')); 
         document.getElementById('page-' + pageID).classList.add('page-active'); 
@@ -848,31 +848,22 @@ function updateAnalysisRegion(region) {
         activeBtn.classList.add('nav-box-active'); 
         if (window.innerWidth >= 1024) activeBtn.classList.add('desktop-nav-active'); 
         
-        // 記憶分頁位置
+        // 記憶分頁位置，讓重新整理後不迷路
         localStorage.setItem('lastActivePage', pageID); 
         
         safeLucide(); 
         window.scrollTo(0,0); 
     }
 
-    // 2. 當網頁一開啟時，自動讀取記憶並更新時間
+    // 2. 網頁載入時讀取記憶
     window.addEventListener('load', () => {
-        // 讀取分頁記憶
         const savedPage = localStorage.getItem('lastActivePage');
         if (savedPage) {
             switchPage(savedPage);
         }
-
-        // 更新最後整理時間標記
-        const now = new Date();
-        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        const timeEl = document.getElementById('last-update-time');
-        if (timeEl) {
-            timeEl.innerText = '數據已更新: ' + timeStr;
-        }
     });
 
-    // 3. 介面控制邏輯 (已刪除重複的 toggleHistory)
+    // 3. 介面控制邏輯 (保持單一、不重複)
     function toggleHistory() { 
         document.getElementById('historyList').classList.toggle('hidden'); 
         document.getElementById('historyIcon').style.transform = document.getElementById('historyList').classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)'; 
@@ -882,7 +873,7 @@ function updateAnalysisRegion(region) {
         document.getElementById('monitor-modal').classList.add('hidden'); 
     }
 
-    // 4. iPhone Standalone 自動重新整理
+    // 4. iPhone Standalone 模式自動重新整理 (確保從背景切換回來時數據有刷過)
     document.addEventListener("visibilitychange", () => {
         const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
         if (document.visibilityState === 'visible' && isStandalone) {
